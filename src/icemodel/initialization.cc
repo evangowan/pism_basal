@@ -22,6 +22,7 @@
 #include "IceModel.hh"
 #include "pism/basalstrength/ConstantYieldStress.hh"
 #include "pism/basalstrength/MohrCoulombYieldStress.hh"
+#include "pism/basalstrength/MohrCoulombYieldStressEvan.hh" // added by Evan
 #include "pism/basalstrength/basal_resistance.hh"
 #include "pism/calving/CalvingAtThickness.hh"
 #include "pism/calving/EigenCalving.hh"
@@ -32,6 +33,7 @@
 #include "pism/calving/FrontalMelt.hh"
 #include "pism/energy/BedThermalUnit.hh"
 #include "pism/hydrology/Hydrology.hh"
+#include "pism/hydrology/hydrologyEvan.hh" // added by Evan
 #include "pism/stressbalance/StressBalance.hh"
 #include "pism/stressbalance/sia/SIAFD.hh"
 #include "pism/stressbalance/ssa/SSAFD.hh"
@@ -562,6 +564,8 @@ void IceModel::allocate_subglacial_hydrology() {
     m_subglacial_hydrology = new Routing(m_grid);
   } else if (hydrology_model == "distributed") {
     m_subglacial_hydrology = new Distributed(m_grid, m_stress_balance.get());
+  } else if (hydrology_model == "hydrologyEvan") {
+    m_subglacial_hydrology = new hydrologyEvan(m_grid, m_stress_balance.get(), m_surface); // added by Evan
   } else {
     throw RuntimeError::formatted(PISM_ERROR_LOCATION, "unknown value for configuration string 'hydrology.model':\n"
                                   "has value '%s'", hydrology_model.c_str());
@@ -590,6 +594,8 @@ void IceModel::allocate_basal_yield_stress() {
       m_basal_yield_stress_model = new ConstantYieldStress(m_grid);
     } else if (yield_stress_model == "mohr_coulomb") {
       m_basal_yield_stress_model = new MohrCoulombYieldStress(m_grid, m_subglacial_hydrology);
+    } else if (yield_stress_model == "mohr_coulomb_evan") {
+      m_basal_yield_stress_model = new MohrCoulombYieldStressEvan(m_grid, m_subglacial_hydrology); // added by Evan
     } else {
       throw RuntimeError::formatted(PISM_ERROR_LOCATION, "yield stress model '%s' is not supported.",
                                     yield_stress_model.c_str());

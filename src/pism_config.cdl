@@ -114,7 +114,7 @@ netcdf pism_config {
     pism_config:basal_yield_stress.ice_free_bedrock_units = "Pascal";
 
     pism_config:basal_yield_stress.model = "mohr_coulomb";
-    pism_config:basal_yield_stress.model_choices = "constant,mohr_coulomb";
+    pism_config:basal_yield_stress.model_choices = "constant,mohr_coulomb,mohr_coulomb_evan"; // added Evan's model
     pism_config:basal_yield_stress.model_doc = "The basal yield stress model to use when sliding is active.";
     pism_config:basal_yield_stress.model_option = "yield_stress";
     pism_config:basal_yield_stress.model_type = "keyword";
@@ -772,7 +772,7 @@ netcdf pism_config {
     pism_config:hydrology.maximum_time_step_units = "years";
 
     pism_config:hydrology.model = "null";
-    pism_config:hydrology.model_choices = "null,routing,distributed";
+    pism_config:hydrology.model_choices = "null,routing,distributed,hydrologyEvan";
     pism_config:hydrology.model_doc = "Basal hydrology sub-model.";
     pism_config:hydrology.model_option = "hydrology";
     pism_config:hydrology.model_type = "keyword";
@@ -830,6 +830,81 @@ netcdf pism_config {
     pism_config:hydrology.use_const_bmelt_doc = "if 'yes', subglacial hydrology model sees basal melt rate which is constant and given by hydrology.const_bmelt";
     pism_config:hydrology.use_const_bmelt_option = "hydrology_use_const_bmelt";
     pism_config:hydrology.use_const_bmelt_type = "boolean";
+
+// variable added by Evan
+
+    pism_config:hydrology.fraction_from_surface = 0.8;
+    pism_config:hydrology.fraction_from_surface_doc = "fraction of water melt from surface that is transfered to the base";
+    pism_config:hydrology.fraction_from_surface_option = "hydrology_fraction_from_surface";
+    pism_config:hydrology.fraction_from_surface_type = "scalar";
+    pism_config:hydrology.fraction_from_surface_units = "pure number";
+
+    // 30 km was suggested by Arnold and Sharp (2002)
+    pism_config:hydrology.tunnel_spacing = 30000.0;
+    pism_config:hydrology.tunnel_spacing_doc = "distance between tunnels";
+    pism_config:hydrology.tunnel_spacing_option = "hydrology_tunnel_spacing";
+    pism_config:hydrology.tunnel_spacing_type = "scalar";
+    pism_config:hydrology.tunnel_spacing_units = "meters";
+
+    pism_config:hydrology.channel_flow_constant = 700.0;
+    pism_config:hydrology.channel_flow_constant_doc = "empirical constant related to turbulent channel flow";
+    pism_config:hydrology.channel_flow_constant_option = "hydrology_channel_flow_constant";
+    pism_config:hydrology.channel_flow_constant_type = "scalar";
+    pism_config:hydrology.channel_flow_constant_units = "meter^{8/3}";
+
+    pism_config:hydrology.bedrock_wavelength = 5.0;
+    pism_config:hydrology.bedrock_wavelength_doc = "bedrock bump amplitude";
+    pism_config:hydrology.bedrock_wavelength_option = "hydrology_bedrock_wavelength";
+    pism_config:hydrology.bedrock_wavelength_type = "scalar";
+    pism_config:hydrology.bedrock_wavelength_units = "meters";
+
+    pism_config:hydrology.bedrock_bump_amplitude = 1.0;
+    pism_config:hydrology.bedrock_bump_amplitude_doc = "bedrock bump_amplitude";
+    pism_config:hydrology.bedrock_bump_amplitude_option = "hydrology_bedrock_bump_amplitude";
+    pism_config:hydrology.bedrock_bump_amplitude_type = "scalar";
+    pism_config:hydrology.bedrock_bump_amplitude_units = "meters";
+
+    pism_config:hydrology.cavity_area = 0.01;
+    pism_config:hydrology.cavity_area_doc = "cross section area for a cavity";
+    pism_config:hydrology.cavity_area_option = "hydrology_cavity_area";
+    pism_config:hydrology.cavity_area_type = "scalar";
+    pism_config:hydrology.cavity_area_units = "meter^2";
+
+    pism_config:hydrology.cavity_spacing = 1.0;
+    pism_config:hydrology.cavity_spacing_doc = "cavity spacing across a glacier";
+    pism_config:hydrology.cavity_spacing_option = "hydrology_cavity_spacing";
+    pism_config:hydrology.cavity_spacing_type = "scalar";
+    pism_config:hydrology.cavity_spacing_units = "meter";
+
+    pism_config:hydrology.power_bedrock = 2.0;
+    pism_config:hydrology.power_bedrock_doc = "power function for self-similar bedrocks";
+    pism_config:hydrology.power_bedrock_option = "hydrology_power_bedrock";
+    pism_config:hydrology.power_bedrock_type = "scalar";
+    pism_config:hydrology.power_bedrock_units = "pure number";
+
+
+    pism_config:hydrology.shadowing_function = 0.5;
+    pism_config:hydrology.shadowing_function_doc = "shadowing function defined as the probability that a randomly selected area of the bed is in contact with the ice, from Lliboutry (1978)";
+    pism_config:hydrology.shadowing_function_option = "hydrology_shadowing_function";
+    pism_config:hydrology.shadowing_function_type = "scalar";
+    pism_config:hydrology.shadowing_function_units = "pure number";
+
+
+
+    pism_config:hydrology.maximum_effective_pressure_ratio = 0.9;
+    pism_config:hydrology.maximum_effective_pressure_ratio_doc = "Maximum effective pressure of hydrology system, as a fraction of the overburden";
+    pism_config:hydrology.maximum_effective_pressure_ratio_option = "hydrology_shadowing_function";
+    pism_config:hydrology.maximum_effective_pressure_ratio_type = "scalar";
+    pism_config:hydrology.maximum_effective_pressure_ratio_units = "pure number";
+
+    pism_config:hydrology.till_fraction_coverage = 1.0;
+    pism_config:hydrology.till_fraction_coverage_doc = "Fraction of base that is covered by sediments";
+    pism_config:hydrology.till_fraction_coverage_option = "till_fraction_coverage";
+    pism_config:hydrology.till_fraction_coverage_type = "scalar";
+    pism_config:hydrology.till_fraction_coverage_units = "pure number";
+
+
+//
 
     pism_config:inverse.design.cH1     = 0;
     pism_config:inverse.design.cH1_doc = "weight of derivative part of an H1 norm for inversion design variables";

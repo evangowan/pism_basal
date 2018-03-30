@@ -49,6 +49,8 @@ public:
   const IceModelVec2S& melt() const;
   const IceModelVec2S& runoff() const;
 
+  void get_runoff_rate(IceModelVec2S &result); // added by Evan
+
 protected:
   virtual void init_impl();
   virtual void update_impl(double my_t, double my_dt);
@@ -98,6 +100,10 @@ protected:
 
   //! total runoff during the last time step
   IceModelVec2S m_runoff;
+
+  //! runoff rate, added by Evan
+  IceModelVec2S m_runoff_rate_store;
+
 
   bool m_sd_use_param, m_sd_file_set;
   int m_sd_period;

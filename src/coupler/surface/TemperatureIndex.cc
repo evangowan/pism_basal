@@ -216,6 +216,13 @@ TemperatureIndex::TemperatureIndex(IceGrid::ConstPtr g)
                          "firn cover depth",
                          "m", "");
   m_firn_depth.set(0.0);
+
+ // added by Evan
+ m_runoff_rate_store.create(m_grid, "m_runoff_rate_store", WITHOUT_GHOSTS);
+ m_runoff_rate_store.set_attrs("model_state", "runoff rate storage",
+                           "m s-1", "runoff_store");
+ m_runoff_rate_store.metadata().set_double("valid_min", 0.0);
+
 }
 
 TemperatureIndex::~TemperatureIndex() {
@@ -317,6 +324,7 @@ void TemperatureIndex::init_impl() {
     m_accumulation.set(0.0);
     m_melt.set(0.0);
     m_runoff.set(0.0);
+    m_runoff_rate_store.set(0.0); // added by Evan
   }
 }
 
@@ -336,6 +344,12 @@ double TemperatureIndex::compute_next_balance_year_start(double time) {
     return balance_year_start;
   }
   return m_grid->ctx()->time()->increment_date(balance_year_start, 1);
+}
+
+// added by Evan to grab runoff rate
+void TemperatureIndex::get_runoff_rate(IceModelVec2S &result) {
+
+  result.copy_from(m_runoff_rate_store);
 }
 
 void TemperatureIndex::update_impl(double t, double dt) {
@@ -373,7 +387,9 @@ void TemperatureIndex::update_impl(double t, double dt) {
   const IceModelVec2CellType &mask = *m_grid->variables().get_2d_cell_type("mask");
 
   IceModelVec::AccessList list{&mask, &m_air_temp_sd, &m_climatic_mass_balance,
-      &m_firn_depth, &m_snow_depth, &m_accumulation, &m_melt, &m_runoff};
+      &m_firn_depth, &m_snow_depth, &m_accumulation, &m_melt, &m_runoff, &m_runoff_rate_store};
+
+//  list.add(&m_runoff_rate_store); // added by Evan
 
   const double
     sigmalapserate = m_config->get_double("surface.pdd.std_dev_lapse_lat_rate"),
@@ -413,6 +429,7 @@ void TemperatureIndex::update_impl(double t, double dt) {
         m_melt(i, j)                  = 0.0;
         m_runoff(i, j)                = 0.0;
         m_climatic_mass_balance(i, j) = 0.0;
+        m_runoff_rate_store(i, j)     = 0.0;  // added by Evan
       }
 
       // the temperature time series from the AtmosphereModel and its modifiers
@@ -507,6 +524,9 @@ void TemperatureIndex::update_impl(double t, double dt) {
           // m * (kg / m^3) / second = kg / m^2 / second
           m_climatic_mass_balance(i, j) += changes.smb * ice_density / m_dt;
         } // end of the time-stepping loop
+
+        m_runoff_rate_store(i, j) = m_runoff(i, j) / (m_dt * double(N)); // added by Evan
+
       }
 
       if (mask.ocean(i,j)) {

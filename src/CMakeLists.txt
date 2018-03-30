@@ -121,6 +121,7 @@ add_library (pism
   basalstrength/ConstantYieldStress.cc
   basalstrength/MohrCoulombYieldStress.cc
   basalstrength/YieldStress.cc
+  basalstrength/MohrCoulombYieldStressEvan.cc
   calving/CalvingAtThickness.cc
   calving/CalvingFrontRetreat.cc
   calving/EigenCalving.cc
@@ -148,6 +149,7 @@ add_library (pism
   geometry/grounded_cell_fraction.cc
   geometry/part_grid_threshold_thickness.cc
   hydrology/DistributedHydrology.cc
+  hydrology/hydrologyEvan.cc
   hydrology/Hydrology.cc
   hydrology/NullTransportHydrology.cc
   hydrology/RoutingHydrology.cc

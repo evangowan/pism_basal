@@ -1,0 +1,90 @@
+// Copyright (C) 2012-2015 PISM Authors
+//
+// This file is part of PISM.
+//
+// PISM is free software; you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation; either version 3 of the License, or (at your option) any later
+// version.
+//
+// PISM is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+// details.
+//
+// You should have received a copy of the GNU General Public License
+// along with PISM; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+#ifndef _PISMHYDROLOGYEVAN_H_
+#define _PISMHYDROLOGYEVAN_H_
+
+#include "Hydrology.hh"
+#include "pism/util/iceModelVec.hh"
+#include "pism/util/Component.hh"
+#include "pism/coupler/SurfaceModel.hh"
+
+namespace pism {
+
+class IceModelVec2T;
+
+namespace stressbalance {
+class StressBalance;
+}
+
+//! @brief Sub-glacial hydrology models and related diagnostics.
+namespace hydrology {
+
+
+// This is the same as NullTransport, except that the entire water thickness is saved instead of just the water in the till
+class hydrologyEvan : public NullTransport {
+public:
+  hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance *sb, surface::SurfaceModel *m_surface);
+  virtual ~hydrologyEvan();
+  virtual void init();
+
+  virtual void write_model_state_impl(const PIO &output) const;
+  virtual void define_model_state_impl(const PIO &output) const;
+
+
+  virtual void get_SedimentDistribution(IceModelVec2S &result);
+  virtual void pressure_gradient(IceModelVec2V &result);
+  virtual void get_EffectivePressure(IceModelVec2S &result);
+
+protected:
+
+  virtual void get_input_rate(double hydro_t, double hydro_dt, IceModelVec2S &result);
+//  virtual MaxTimestep max_timestep_impl(double t);
+  //! Solves an implicit step of a highly-simplified ODE.
+  virtual void update_impl(double icet, double icedt);
+
+
+  virtual void update_velbase_mag(IceModelVec2S &result);
+  virtual void update_surface_runoff(IceModelVec2S &result);
+
+
+  IceModelVec2S m_till_cover;      // fraction of surface covered by till
+  IceModelVec2S m_velbase_mag; // velocity at the base of the ice sheet
+  IceModelVec2S m_hydrology_effective_pressure; // effective pressure at the base due to hydrology
+
+  // need to get basal sliding velocity (thus speed):
+  stressbalance::StressBalance* m_stressbalance;
+
+  // need surface model to get surface melt
+  surface::SurfaceModel* m_surfaceT;
+
+private:
+
+  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_volume_water_flux, m_tunnel_cross_section;
+  IceModelVec2V m_gradient_temp, m_hydro_gradient_dir;// directional gradient
+
+
+};
+
+
+
+} // end of namespace hydrology
+} // end of namespace pism
+
+
+#endif /* _PISMHYDROLOGYEVAN_H_ */

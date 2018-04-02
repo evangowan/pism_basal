@@ -75,7 +75,7 @@ protected:
 
 private:
 
-  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_volume_water_flux, m_tunnel_cross_section;
+  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_volume_water_flux, m_tunnel_cross_section, m_hydrosystem;
   IceModelVec2V m_gradient_temp, m_hydro_gradient_dir;// directional gradient
 
 

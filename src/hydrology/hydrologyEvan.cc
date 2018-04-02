@@ -120,6 +120,13 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
 
 
+ m_hydrosystem.create(m_grid, "hydrology_type", WITHOUT_GHOSTS);
+ m_hydrosystem.set_attrs("model_state",
+                        "type of hydrology, 1 tunnels 2 cavity",
+                        "1", "");
+ m_hydrosystem.metadata().set_double("valid_min", 0.0);
+
+
 }
 
 hydrologyEvan::~hydrologyEvan() {
@@ -138,19 +145,10 @@ void hydrologyEvan::init() {
 
       m_till_cover.set(till_cover);
       m_volume_water_flux.set(0.0);
+      m_hydrosystem.set(0.0);
 
 }
 
-
-/*
-void hydrologyEvan::add_vars_to_output_impl(const std::string &keyword, std::set<std::string> &result) {
-  Hydrology::add_vars_to_output_impl(keyword, result);
-  result.insert("tillcover");
-  result.insert("WaterBase");
-  result.insert("WaterBaseThickness");
-  result.insert("fraction_tunnel");
-}
-*/
 
 void hydrologyEvan::define_model_state_impl(const PIO &output) const {
 
@@ -158,7 +156,10 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydrology_effective_pressure.define(output);
   m_total_input_ghosts.define(output);
   m_volume_water_flux.define(output);
-
+  m_melt_rate_local.define(output);
+  m_hydrosystem.define(output);
+  m_velbase_mag.define(output);
+  m_hydro_gradient_dir.define(output);
 }
 
 void hydrologyEvan::write_model_state_impl(const PIO &output) const {
@@ -167,7 +168,10 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_hydrology_effective_pressure.write(output);
   m_total_input_ghosts.write(output);
   m_volume_water_flux.write(output);
-  
+  m_melt_rate_local.write(output);
+  m_hydrosystem.write(output);
+  m_velbase_mag.write(output);
+  m_hydro_gradient_dir.write(output);
 
 }
 
@@ -306,9 +310,25 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   // cheat
 
  //   m_melt_rate_local.set(5.0);
+
+  double seconds_in_year = 365.0*24.0*3600.0;
   
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
+  // cheat
+   const double
+    x = m_grid->x(i),
+    y = m_grid->y(j); // hopefully the grid is always square
+
+    if(y < -50000.0 && x >= -50000 && x <= 50000.0) {
+     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
+
+    }
+
+    if(y > 50000.0 && x >= -50000 && x <= 50000.0) {
+     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
+
+    }
 
     if (mask.icy(i, j)) {
       result(i,j) = (use_const) ? const_bmelt : m_bmelt_local(i,j); // get the melt water from the base
@@ -371,7 +391,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-
 //  m_log->message(2,
 //             "* tunnel_spacing: %f\n", tunnel_spacing);
 
@@ -408,6 +427,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   list.add(m_hydrology_effective_pressure);
   list.add(m_volume_water_flux);
   list.add(m_pressure_temp);
+  list.add(m_hydrosystem);
 
 
 
@@ -470,27 +490,54 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-    double angle = atan2(m_hydro_gradient_dir(i,j).v, m_hydro_gradient_dir(i,j).u);
+    double x_amount;
+    double y_amount;
+    double angle;
 
-    double x_amount = cos(angle);
-    double y_amount = sin(angle);
+    if ( fabs(m_hydro_gradient_dir(i,j).v) > 0.01 || fabs(m_hydro_gradient_dir(i,j).u) > 0.01 ) { // if the gradient is not that much, then it should not transmit water
+      angle = atan2(m_hydro_gradient_dir(i,j).v, m_hydro_gradient_dir(i,j).u);
+
+      x_amount = m_hydro_gradient_dir(i,j).u; //cos(angle);
+      y_amount = m_hydro_gradient_dir(i,j).v; //sin(angle);
+
+//  m_log->message(2,
+//             "* %i %i %f %f %f\n", i, j, x_amount, y_amount, fabs(x_amount) + fabs(y_amount));
+
+      // normalize
+
+      double sum_components = fabs(x_amount) + fabs(y_amount);
+      x_amount = x_amount / sum_components;
+      y_amount = y_amount / sum_components;
+
+//  m_log->message(2,
+//             "* %i %i %f %f %f\n", i, j, x_amount, y_amount, fabs(x_amount) + fabs(y_amount));
+
+    } else {
+      angle = 0.0;
+      x_amount = 0.0;
+      y_amount = 0.0;
+
+    }
 
     int ghost_index_x = 1;
     int ghost_index_y = 1;
 
-    if(x_amount < 0) {
+    if(x_amount < 0.0) {
       ghost_index_x = -1;
     }
 
-    if(y_amount < 0) {
+    if(y_amount < 0.0) {
       ghost_index_y = -1;
     }
 
 
+//  m_log->message(2,
+//             "* %i %i %i %i %f %f %f %f %f\n", i, j, ghost_index_x, ghost_index_y, x_amount, y_amount, m_hydro_gradient_dir(i,j).v, m_hydro_gradient_dir(i,j).u, angle);
+
     // add the upstream water to the current cell
 
 
-    m_total_input_ghosts(i,j) += m_total_input_ghosts(i+ghost_index_x,j) * abs(x_amount) + m_total_input_ghosts(i,j+ghost_index_y) * abs(y_amount);
+/////    m_total_input_ghosts(i,j) += m_total_input_ghosts(i+ghost_index_x,j) * fabs(x_amount) + m_total_input_ghosts(i,j+ghost_index_y) * fabs(y_amount);
 
 
 //  m_log->message(2,
@@ -528,7 +575,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-    m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * dx / tunnel_spacing; // again assuming dx and dy are the same length
+    m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
 
 //  m_log->message(2,
 //             "* m_volume_water_flux: %f\n", m_volume_water_flux(i,j));
@@ -539,7 +586,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     if(m_hydro_gradient(i,j) > 1.0e-8) {
       m_tunnel_cross_section(i,j) = pow(channel_flow_constant * pow(m_volume_water_flux(i,j),2.0) / (rho_w * g * m_hydro_gradient(i,j)), 3.0/8.0);
     } else{
-      m_tunnel_cross_section(i,j);
+      m_tunnel_cross_section(i,j) = 0.0;
     }
 
 //  m_log->message(2,
@@ -563,9 +610,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     // Cavity effective pressure
     // Equation A.11 from Arnold and Sharp (2002) (note that the equation is wrong in the paper, see equation 4.16 in Fowler (1987))
     double effective_pressure_cavity;
+
+    double number_of_cavities = cavity_spacing *  tunnel_spacing;
+
     if(m_total_input_ghosts(i,j) > 1e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-      effective_pressure_cavity = shadowing_function * pow(( (rho_w * g * m_hydro_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) * 
-                                                              (m_volume_water_flux(i,j)) / (cavity_spacing * cavity_area) ), (1.0 / Glen_exponent));
+      effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_hydro_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) * 
+                                                              ( m_volume_water_flux(i,j) / (number_of_cavities * cavity_area) ) ), (1.0 / Glen_exponent));
     } else {
       effective_pressure_cavity = 0.0;
     }
@@ -591,15 +641,24 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
       m_hydrology_effective_pressure(i,j) = 0.0;
 
+      m_hydrosystem(i,j) = 0.;
+
     } else if(tunnel_stability < critical_stability) { // tunnels are stable, so take that as the effective pressure
 
       m_hydrology_effective_pressure(i,j) = effective_pressure_tunnel;
+      m_hydrosystem(i,j) = 1.;
 
     } else { // cavity system
 
       m_hydrology_effective_pressure(i,j) = effective_pressure_cavity;
+      m_hydrosystem(i,j) = 2.;
 
     }
+
+//  m_log->message(2,
+//             "* %i %i %f %f %f\n", i, j, effective_pressure_tunnel, effective_pressure_cavity, m_hydrosystem(i,j));
+//  m_log->message(2,
+//             "* %i %i %f %f %f\n", i, j, m_tunnel_cross_section(i,j), number_of_cavities * cavity_area, m_volume_water_flux(i,j));
 
   }
 

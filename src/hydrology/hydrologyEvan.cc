@@ -384,7 +384,10 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
+
+
   // cheat
+   result(i,j) = 0.0;
    const double
     x = m_grid->x(i),
     y = m_grid->y(j); // hopefully the grid is always square
@@ -397,16 +400,16 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
       melt_factor = 1.0;
     }
 
-    if(y < -50000.0 && x >= -50000 && x <= 50000.0) {
+    if(y < -50000.0 && x >= -50000 && x <= 50000.0 && hydro_t > 10000.0 * seconds_in_year) {
 //     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
-      m_melt_rate_local(i,j) = 100.0* pow(10.0,melt_factor) / seconds_in_year;
+      m_melt_rate_local(i,j) =  pow(10.0,melt_factor) / seconds_in_year;
 
     }
 
     if(y > 50000.0 && x >= -50000 && x <= 50000.0) {
  //    m_melt_rate_local(i,j) = 0.5 / seconds_in_year;
 
-      m_melt_rate_local(i,j) = pow(10.0,melt_factor) / seconds_in_year * 0.25;
+//      m_melt_rate_local(i,j) = pow(10.0,melt_factor) / seconds_in_year * 0.25;
 
     }
     // end cheat
@@ -560,7 +563,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
          m_total_input_ghosts(i,j) = 0.0;
       } else { // determine how much water was taken up by the sediments and subtract it from the total water
 
-        double water_in_till = ((Wtill_before - Wtill_after)  * icedt + tillwat_decay_rate) * m_till_cover(i,j);
+        double water_in_till = ((Wtill_before - Wtill_after)  / icedt + tillwat_decay_rate) * m_till_cover(i,j);
         m_total_input_ghosts(i,j) -= water_in_till;
 
       }

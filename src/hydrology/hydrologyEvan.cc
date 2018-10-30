@@ -38,6 +38,7 @@
 #include "pism/util/pism_utilities.hh"
 #include "pism/util/IceModelVec2CellType.hh"
 
+
 namespace pism {
 namespace hydrology {
 
@@ -64,6 +65,18 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "pressure at the base",
                         "Pa", "");
 
+
+
+  m_surface_gradient_temp.create(m_grid, "surface_gradient_temp", WITHOUT_GHOSTS);
+  m_surface_gradient_temp.set_attrs("internal",
+                        "temporary storage for the surface gradient",
+                        "1", "");
+
+  m_bed_gradient_temp.create(m_grid, "bed_gradient_temp", WITHOUT_GHOSTS);
+  m_bed_gradient_temp.set_attrs("internal",
+                        "temporary storage for the bed gradient",
+                        "1", "");
+
   m_gradient_temp.create(m_grid, "gradient_temp", WITHOUT_GHOSTS);
   m_gradient_temp.set_attrs("internal",
                         "gradient at the base",
@@ -78,7 +91,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
   m_hydro_gradient_dir.create(m_grid, "hydro_gradient_dir", WITHOUT_GHOSTS);
   m_hydro_gradient_dir.set_attrs("internal",
-                        "pressure gradient at the base in directional components",
+                        "potential gradient at the base in directional components",
                         "Pa m-1", "");
 
   m_surface_gradient.create(m_grid, "hydro_surface_gradient", WITHOUT_GHOSTS);
@@ -94,13 +107,24 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_surface_elevation_temp.create(m_grid, "surface_elevation_temp", WITH_GHOSTS, stencil_width);
   m_surface_elevation_temp.set_attrs("model_state",
                        "temporary surface_elevation",
-                       "1", "");
+                       "m", "");
+
+  m_bed_elevation_temp.create(m_grid, "bed_elevation_temp", WITH_GHOSTS, stencil_width);
+  m_bed_elevation_temp.set_attrs("model_state",
+                       "temporary bed_elevation",
+                       "m", "");
+
 
 
 
   m_till_cover.create(m_grid, "tillcover", WITHOUT_GHOSTS);
   m_till_cover.set_attrs("model_state",
                        "fraction of surface that is covered in till",
+                       "1", "");
+
+  m_gradient_permutation.create(m_grid, "gradient_permutation", WITHOUT_GHOSTS);
+  m_gradient_permutation.set_attrs("model_state",
+                       "permutation array for sorting the gradient",
                        "1", "");
 
 
@@ -148,6 +172,13 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
  m_hydrosystem.metadata().set_double("valid_min", 0.0);
 
 
+ m_check_mask.create(m_grid, "check_mask", WITHOUT_GHOSTS);
+ m_check_mask.set_attrs("internal",
+                        "check for if a cell has been checked in the gradient sort",
+                        "1", "");
+ m_check_mask.metadata().set_double("valid_min", 0.0);
+
+
 }
 
 hydrologyEvan::~hydrologyEvan() {
@@ -164,9 +195,32 @@ void hydrologyEvan::init() {
                 m_config->get_double("hydrology.till_fraction_coverage"));
 
 
-      m_till_cover.set(till_cover);
-      m_volume_water_flux.set(0.0);
-      m_hydrosystem.set(0.0);
+  m_till_cover.set(till_cover);
+  m_volume_water_flux.set(0.0);
+  m_hydrosystem.set(0.0);
+
+  // initialize the permutation array, after the first sorting it should not take long to sort
+
+
+
+  int counter = 0;
+
+  IceModelVec::AccessList list;
+  list.add(m_gradient_permutation);
+
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+    m_log->message(2,
+             "%i %i %i\n", i, j, counter);
+
+    m_gradient_permutation(i, j) = counter;
+    counter++;
+
+  }
+
+  m_log->message(2,
+             "* Finished initializing the permutation array ...\n");
 
 }
 
@@ -180,9 +234,11 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_melt_rate_local.define(output);
   m_hydrosystem.define(output);
   m_velbase_mag.define(output);
+  m_hydro_gradient.define(output);
   m_hydro_gradient_dir.define(output);
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
+  m_gradient_permutation.define(output);
 }
 
 void hydrologyEvan::write_model_state_impl(const PIO &output) const {
@@ -194,9 +250,11 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_melt_rate_local.write(output);
   m_hydrosystem.write(output);
   m_velbase_mag.write(output);
+  m_hydro_gradient.write(output);
   m_hydro_gradient_dir.write(output);
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
+  m_gradient_permutation.write(output);
 
 }
 
@@ -237,11 +295,16 @@ void hydrologyEvan::update_surface_runoff(IceModelVec2S &result) {
 }
 
 
+// potential gradient at the base of the ice sheet
+void hydrologyEvan::potential_gradient(IceModelVec2V &result) {
 
-void hydrologyEvan::pressure_gradient(IceModelVec2V &result) {
+  double rho_i       = m_config->get_double("constants.ice.density");
+  double rho_w       = m_config->get_double("constants.fresh_water.density");
+  double g           = m_config->get_double("constants.standard_gravity");
+  double flotation_fraction = m_config->get_double("hydrology.floatation_fraction");
 
-//  m_log->message(2,
-//             "* Starting hydrologyEvan::pressure_gradient ...\n");
+  double rho_i_g = rho_i * g;
+  double density_ratio = rho_w / rho_i;
 
   const double
     dx = m_grid->dx(),
@@ -252,22 +315,23 @@ void hydrologyEvan::pressure_gradient(IceModelVec2V &result) {
 
   IceModelVec::AccessList list;
   list.add(m_pressure_temp);
+  list.add(m_surface_gradient_temp);
+  list.add(m_bed_gradient_temp);
   list.add(m_gradient_temp);
 
 
-  overburden_pressure(m_pressure_temp);
-
-  m_pressure_temp.update_ghosts();
+  // grab the bed and surface gradients
+  surface_gradient(m_surface_gradient_temp);
+  bed_gradient(m_bed_gradient_temp);
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-
-    m_gradient_temp(i,j).u = ((m_pressure_temp(i+1,j+1) + 2.0 * m_pressure_temp(i+1,j) + m_pressure_temp(i+1,j-1)) -
-			    (m_pressure_temp(i-1,j+1) + 2.0 * m_pressure_temp(i-1,j) + m_pressure_temp(i-1,j-1))) / (8.0 * dx);
-
-    m_gradient_temp(i,j).v = ((m_pressure_temp(i+1,j+1) + 2.0 * m_pressure_temp(i,j+1) + m_pressure_temp(i-1,j+1)) -
-			    (m_pressure_temp(i+1,j-1) + 2.0 * m_pressure_temp(i,j-1) + m_pressure_temp(i-1,j-1))) / (8.0 * dy);
+    // Equation 6.13 in Cuffy and Paterson (2010)
+    // The flotation fraction is the ratio of the pressure of water to the pressure of ice, and will influence the effect of the bed gradient on the total potential gradient
+    // At a default, it is set to 0.8, which gives means the bed slope needs to be 2.7 times greater than the surface slope to have an equal influence on the direction of water flow.
+    m_gradient_temp(i,j).u = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
+    m_gradient_temp(i,j).v = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
 
 
   }
@@ -275,16 +339,15 @@ void hydrologyEvan::pressure_gradient(IceModelVec2V &result) {
   result.copy_from(m_gradient_temp);
 
 //  m_log->message(2,
-//             "* Finished hydrologyEvan::pressure_gradient ...\n");
+//             "* Finished hydrologyEvan::potential_gradient ...\n");
 
 }
 
+// find the gradient of the surface
 void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
 
 
   const IceModelVec2S &surface_elevation = *m_grid->variables().get_2d_scalar("surface_altitude");
-
-
 
   const double
     dx = m_grid->dx(),
@@ -297,26 +360,53 @@ void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
   list.add(surface_elevation);
   list.add(m_surface_elevation_temp);
 
-
-
   m_surface_elevation_temp.copy_from(surface_elevation);
-
   m_surface_elevation_temp.update_ghosts();
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-
+   
+    // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
     result(i,j).u = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i+1,j) + m_surface_elevation_temp(i+1,j-1)) -
 			    (m_surface_elevation_temp(i-1,j+1) + 2.0 * m_surface_elevation_temp(i-1,j) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dx);
 
     result(i,j).v = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i,j+1) + m_surface_elevation_temp(i-1,j+1)) -
 			    (m_surface_elevation_temp(i+1,j-1) + 2.0 * m_surface_elevation_temp(i,j-1) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dy);
 
-
   }
 
+}
 
+// find the gradient of the bed
+void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
+
+  const IceModelVec2S &bed_elevation = *m_grid->variables().get_2d_scalar("bedrock_altitude");
+
+  const double
+    dx = m_grid->dx(),
+    dy = m_grid->dy();
+
+  double u, v;
+
+  IceModelVec::AccessList list;
+  list.add(bed_elevation);
+  list.add(m_bed_elevation_temp);
+
+  m_bed_elevation_temp.copy_from(bed_elevation);
+  m_bed_elevation_temp.update_ghosts();
+
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+    // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
+    result(i,j).u = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i+1,j) + m_bed_elevation_temp(i+1,j-1)) -
+			    (m_bed_elevation_temp(i-1,j+1) + 2.0 * m_bed_elevation_temp(i-1,j) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dx);
+
+    result(i,j).v = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i,j+1) + m_bed_elevation_temp(i-1,j+1)) -
+			    (m_bed_elevation_temp(i+1,j-1) + 2.0 * m_bed_elevation_temp(i,j-1) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dy);
+
+  }
 }
 
 
@@ -385,7 +475,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-
+/*
   // cheat
    result(i,j) = 0.0;
    const double
@@ -402,7 +492,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
     if(y < -50000.0 && x >= -50000 && x <= 50000.0 && hydro_t > 10000.0 * seconds_in_year) {
 //     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
-      m_melt_rate_local(i,j) =  pow(10.0,melt_factor) / seconds_in_year;
+      m_melt_rate_local(i,j) =  100.*pow(10.0,melt_factor) / seconds_in_year;
 
     }
 
@@ -414,14 +504,16 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
     }
     // end cheat
 
+*/
+
     if (mask.icy(i, j)) {
 
-      if( m_bmelt_local(i,j) < 0.1 / seconds_in_year) {
+//      if( m_bmelt_local(i,j) < 0.1 / seconds_in_year) {
         result(i,j) = (use_const) ? const_bmelt : m_bmelt_local(i,j); // get the melt water from the base
-      } else {
+//      } else {
 
-        result(i,j) = (use_const) ? const_bmelt : 0.1 / seconds_in_year; // get the melt water from the base
-      }
+ //       result(i,j) = (use_const) ? const_bmelt : 0.1 / seconds_in_year; // get the melt water from the base
+ //     }
 
       result(i,j) += m_melt_rate_local(i,j) *  const_water_from_surface; // add on the meltwater from the surface
 
@@ -457,8 +549,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-//  m_log->message(2,
-//             "* Starting hydrologyEvan::update_impl ...\n");
+  m_log->message(2,
+             "* Starting hydrologyEvan::update_impl ...\n");
 
   // if asked for the identical time interval as last time, then do nothing
 //  if ((fabs(icet - m_t) < 1e-6) && (fabs(icedt - m_dt) < 1e-6)) {
@@ -498,8 +590,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //  m_log->message(2,
 //             "* dx: %f\n", dx);
 
-  // grab the input rate
-  get_input_rate(icet,icedt, m_total_input_ghosts);
+  // grab the input rate, which will be the sum of the meltwater generated from basal heating, and meltwater from the surface
+  get_input_rate(icet,icedt, m_total_input_ghosts); 
 
 
   if (tillwat_max < 0.0) {
@@ -528,7 +620,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   list.add(m_pressure_temp);
   list.add(m_hydrosystem);
   list.add(m_hydrology_fraction_overburden);
-
+  list.add(m_gradient_permutation);
+  list.add(m_check_mask);
 
 
 
@@ -580,21 +673,97 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // cheat
 
-  if (m_t < 5000.) {
+//  if (m_t < 5000.) {
  //   m_total_input_ghosts.set(0.0);
+ // }
+
+
+
+  m_total_input_ghosts.update_ghosts();
+
+  // we're going to need the potential gradient
+  potential_gradient(m_hydro_gradient_dir);
+  surface_gradient(m_surface_gradient_dir);
+
+  // find the magnitude of the potential gradient
+
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+     m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir(i,j).v,2.0) + pow(m_hydro_gradient_dir(i,j).u,2.0));
   }
+
+  // sort the permutation array
+
+  int i_perm, j_perm;
+
+  int i_offset = m_grid->xs();
+  int j_offset = m_grid->ys();
+  int sub_width_i = m_grid->xm();
+  int sub_width_j = m_grid->ym();
+
+  int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
+
+
+  int counter = 0;
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+
+      i_now = i;
+      j_now = j;
+      cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+
+      int backwards_count = counter - 1;
+
+	bool found_back;
+
+      if(backwards_count < 0) {
+        found_back = true;
+      } else {
+        found_back = false;
+      }
+
+      while (! found_back) {
+
+
+       cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); // get the next permutation cell
+
+
+
+        cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); // convert permutation to cell coordinates
+
+//  m_log->message(2,
+ //            "* %i %i %i %i %f %f \n", i_now, j_now, i_next, j_next, m_hydro_gradient(i_current, j_current), m_hydro_gradient(i_compare, j_compare));
+
+        if( m_hydro_gradient(i_current, j_current) < m_hydro_gradient(i_compare, j_compare)) { // swap if true
+
+          double temp_permutation = m_gradient_permutation(i_next, j_next);
+          m_gradient_permutation(i_next, j_next) = m_gradient_permutation(i_now, j_now);
+          m_gradient_permutation(i_now, j_now) = temp_permutation;
+          i_now = i_next;
+          j_now = j_next;
+          backwards_count--;
+
+         } else { // found the natural position for the sort
+           found_back = true;
+         }
+
+         if(backwards_count < 0) {
+           found_back = true;
+         }
+
+
+      }
+
+      counter++;
+  }
+
 
   // The remaining water input rate is supplemented by adding the nearest upstream cell's water. Ideally you would
   // want to include the entire pathway up to the ice sheet dome, but that would require a lot of additional calculations
   // and crosstalk between processors. As a result, the amount of water is surely going to be underestimated (but
   // hopefully not by an amount that is important!)
-
-
-  m_total_input_ghosts.update_ghosts();
-
-  // we're going to need the pressure gradient
-  pressure_gradient(m_hydro_gradient_dir);
-  surface_gradient(m_surface_gradient_dir);
 
 
   for (Points p(*m_grid); p; p.next()) {
@@ -667,6 +836,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 //  m_log->message(2,
 //             "* finished updating velocity ...\n");
+
+  // need to grab the overburden pressure for the calculation of the hydrology scheme
+  overburden_pressure(m_pressure_temp);
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
@@ -802,6 +974,24 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 //  m_log->message(2,
 //             "* finished hydrologyEvan::update_impl ...\n");
+}
+
+
+// returns the coordinate of a cell
+void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_j, int i_offset, int j_offset, int& i, int& j){
+
+  
+  j = floor(in_number / double(number_i)); // number of rows
+
+
+  i = rint(in_number - double(j) * double(number_i)); // column offset
+
+  i = i + i_offset;
+  j = j + j_offset;
+
+//  m_log->message(2,
+ //             "** %f %i %i %i\n", in_number, number_i, j_offset, j);
+
 }
 
 

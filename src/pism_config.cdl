@@ -903,6 +903,12 @@ netcdf pism_config {
     pism_config:hydrology.till_fraction_coverage_type = "scalar";
     pism_config:hydrology.till_fraction_coverage_units = "pure number";
 
+    pism_config:hydrology.floatation_fraction = 0.8;
+    pism_config:hydrology.floatation_fraction_doc = "Flotation fraction, which is the ratio of overburden pressure to water pressure, decreasing the number increases the influence of bed topography on water flow direction";
+    pism_config:hydrology.floatation_fraction_option = "flotation_fraction";
+    pism_config:hydrology.floatation_fraction_type = "scalar";
+    pism_config:hydrology.floatation_fraction_units = "pure number";
+
 
 //
 

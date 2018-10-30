@@ -17,6 +17,7 @@
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <iostream>
+#include <array>
 #include "Hydrology.hh"
 #include "hydrologyEvan.hh"
 #include "pism/util/Mask.hh"
@@ -216,6 +217,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 //m_width_mask
 //m_total_input_ghosts
 // m_gradient_permutation
+// m_hydro_gradient
 
   m_processor_mask_p0 = m_processor_mask.allocate_proc0_copy();
   m_offset_mask_u_p0 = m_offset_mask_u.allocate_proc0_copy();
@@ -225,6 +227,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_total_input_ghosts_p0 = m_total_input_ghosts.allocate_proc0_copy();
   m_total_input_ghosts_temp_p0 = m_total_input_ghosts_temp.allocate_proc0_copy();
   m_gradient_permutation_p0 =m_gradient_permutation.allocate_proc0_copy();
+  m_hydro_gradient_p0 = m_hydro_gradient.allocate_proc0_copy();
 
 
 
@@ -840,10 +843,99 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_total_input_ghosts.put_on_proc0(*m_total_input_ghosts_p0);
     m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
+    m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
+
 
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
+
+        petsc::VecArray processor_mask_p0(*m_processor_mask_p0);
+        petsc::VecArray offset_mask_u_p0(*m_offset_mask_u_p0);
+        petsc::VecArray offset_mask_v_p0(*m_offset_mask_v_p0);
+        petsc::VecArray width_mask_u_p0(*m_width_mask_u_p0);
+        petsc::VecArray width_mask_v_p0(*m_width_mask_v_p0);
+        petsc::VecArray total_input_ghosts_p0(*m_total_input_ghosts_p0);
+        petsc::VecArray total_input_ghosts_temp_p0(*m_total_input_ghosts_temp_p0);
+        petsc::VecArray gradient_permutation_p0(*m_gradient_permutation_p0);
+        petsc::VecArray hydro_gradient_p0(*m_hydro_gradient_p0);
+
+        double* processor_mask_vec =  processor_mask_p0.get();
+        double* offset_mask_u_vec =  offset_mask_u_p0.get();
+        double* offset_mask_v_vec =  offset_mask_v_p0.get();
+        double* width_mask_u_vec =  width_mask_u_p0.get();
+        double* width_mask_v_vec =  width_mask_v_p0.get();
+        double* total_input_ghosts_vec =  total_input_ghosts_p0.get();
+        double* total_input_ghosts_temp_vec =  total_input_ghosts_temp_p0.get();
+        double* gradient_permutation_vec =  gradient_permutation_p0.get();
+        double* hydro_gradient_vec =  hydro_gradient_p0.get();
+
+
+        int total_nodes = m_grid->xm() * m_grid->ym();
+
+        int number_of_processors = m_grid->size();
+
+        // temporary arrays to store information on each subdomain
+
+        int processor_point_counter[number_of_processors] = {0}; // initialize to zero
+        int processor_width_mask_u[number_of_processors];
+        int processor_width_mask_v[number_of_processors];
+        int processor_offset_mask_u[number_of_processors];
+        int processor_offset_mask_v[number_of_processors];
+
+        int max_points = 0;
+
+        int processor, vector_index;
+
+        // Fill up those arrays
+
+        int num_i = m_grid->xm();
+        int num_j = m_grid->ym();
+
+        for (int j = 0; num_j-1; j++) {
+          for (int i = 0; num_i-1; i++) {
+
+            vector_index = j*num_i + i;
+
+            processor = processor_mask_vec[vector_index];
+            processor_point_counter[processor]++; // increment the number of points in that particular processor
+
+            if (processor_point_counter[processor] > max_points) {
+              max_points = processor_point_counter[processor];
+            }
+
+            processor_width_mask_u[processor] = width_mask_u_vec[vector_index];
+            processor_width_mask_v[processor] = width_mask_v_vec[vector_index];
+            processor_offset_mask_u[processor] = offset_mask_u_vec[vector_index];
+            processor_offset_mask_v[processor] = offset_mask_v_vec[vector_index];
+          }
+        }
+
+
+        // read in the permutation and separate per processor
+        double serial_permutation[number_of_processors][max_points];
+
+        for(int k = 0; number_of_processors; k++) {
+
+          processor_point_counter[k] =-1; // first point will be zero, which will give the correct index
+        }
+
+
+        for (int i = 0; m_grid->xm(); i++) {
+          for (int j = 0; m_grid->ym(); j++) {
+
+            vector_index = j*num_i + i;
+
+            processor = processor_mask_vec[vector_index];
+            processor_point_counter[processor]++; // increment the number of points in that particular processor
+            serial_permutation[processor][processor_point_counter[processor]] = gradient_permutation_vec[vector_index];
+          }
+        }
+
+
+        double gradient_storage[number_of_processors]; // used to reduce the amount of calculations
+
+
 //        petsc::VecArray mask_p0(*m_mask_p0);
 //        label_connected_components(mask_p0.get(), m_grid->My(), m_grid->Mx(), true, mask_grounded_ice);
       }

@@ -49,6 +49,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_log->message(2,
              "* Starting hydrologyEvan ...\n");
 
+
   m_stressbalance = sb;
 
   m_surfaceT = m_surface;
@@ -133,6 +134,11 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                           "hydrology model workspace for total input rate into subglacial water layer with ghosts",
                           "m s-1", "");
 
+  m_total_input_ghosts_temp.create(m_grid, "total_input_temp", WITH_GHOSTS, stencil_width); // need ghosts here
+  m_total_input_ghosts_temp.set_attrs("internal",
+                          "hydrology model workspace for total input rate into subglacial water layer with ghosts",
+                          "m s-1", "");
+
 
   m_volume_water_flux.create(m_grid, "volume_water_flux", WITHOUT_GHOSTS);
   m_volume_water_flux.set_attrs("model_state",
@@ -178,18 +184,47 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "1", "");
  m_processor_mask.metadata().set_double("valid_min", 0.0);
 
- m_offset_mask.create(m_grid, "offset_mask", WITHOUT_GHOSTS);
- m_offset_mask.set_attrs("internal",
+ m_offset_mask_u.create(m_grid, "offset_mask_u", WITHOUT_GHOSTS);
+ m_offset_mask_u.set_attrs("internal",
                         "assigns the grid offset for each processor",
                         "1", "");
- m_offset_mask.metadata().set_double("valid_min", 0.0);
+ m_offset_mask_u.metadata().set_double("valid_min", 0.0);
 
- m_width_mask.create(m_grid, "width_mask", WITHOUT_GHOSTS);
- m_width_mask.set_attrs("internal",
+ m_width_mask_u.create(m_grid, "width_mask_u", WITHOUT_GHOSTS);
+ m_width_mask_u.set_attrs("internal",
                         "assigns the grid width for each processor",
                         "1", "");
- m_width_mask.metadata().set_double("valid_min", 0.0);
+ m_width_mask_u.metadata().set_double("valid_min", 0.0);
 
+ m_offset_mask_v.create(m_grid, "offset_mask_v", WITHOUT_GHOSTS);
+ m_offset_mask_v.set_attrs("internal",
+                        "assigns the grid offset for each processor",
+                        "1", "");
+ m_offset_mask_v.metadata().set_double("valid_min", 0.0);
+
+ m_width_mask_v.create(m_grid, "width_mask_v", WITHOUT_GHOSTS);
+ m_width_mask_v.set_attrs("internal",
+                        "assigns the grid width for each processor",
+                        "1", "");
+ m_width_mask_v.metadata().set_double("valid_min", 0.0);
+
+
+// processor 0 memory
+
+//m_processor_mask
+//m_offset_mask
+//m_width_mask
+//m_total_input_ghosts
+// m_gradient_permutation
+
+  m_processor_mask_p0 = m_processor_mask.allocate_proc0_copy();
+  m_offset_mask_u_p0 = m_offset_mask_u.allocate_proc0_copy();
+  m_offset_mask_v_p0 = m_offset_mask_v.allocate_proc0_copy();
+  m_width_mask_u_p0 = m_width_mask_u.allocate_proc0_copy();
+  m_width_mask_v_p0 = m_width_mask_v.allocate_proc0_copy();
+  m_total_input_ghosts_p0 = m_total_input_ghosts.allocate_proc0_copy();
+  m_total_input_ghosts_temp_p0 = m_total_input_ghosts_temp.allocate_proc0_copy();
+  m_gradient_permutation_p0 =m_gradient_permutation.allocate_proc0_copy();
 
 
 
@@ -222,8 +257,10 @@ void hydrologyEvan::init() {
   IceModelVec::AccessList list;
   list.add(m_gradient_permutation);
   list.add(m_processor_mask);
-  list.add(m_offset_mask);
-  list.add(m_width_mask);
+  list.add(m_offset_mask_u);
+  list.add(m_offset_mask_v);
+  list.add(m_width_mask_u);
+  list.add(m_width_mask_v);
 
   int i_offset = m_grid->xs();
   int j_offset = m_grid->ys();
@@ -238,10 +275,10 @@ void hydrologyEvan::init() {
 
     m_gradient_permutation(i, j) = counter;
     m_processor_mask(i,j) = m_grid -> rank();
-    m_offset_mask(i,j).u = i_offset;
-    m_offset_mask(i,j).v = j_offset;
-    m_width_mask(i,j).u = sub_width_i;
-    m_width_mask(i,j).v = sub_width_j;
+    m_offset_mask_u(i,j) = i_offset;
+    m_offset_mask_v(i,j) = j_offset;
+    m_width_mask_u(i,j) = sub_width_i;
+    m_width_mask_v(i,j) = sub_width_j;
     counter++;
 
   }
@@ -257,6 +294,7 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_till_cover.define(output);
   m_hydrology_effective_pressure.define(output);
   m_total_input_ghosts.define(output);
+  m_total_input_ghosts_temp.define(output);
   m_volume_water_flux.define(output);
   m_melt_rate_local.define(output);
   m_hydrosystem.define(output);
@@ -265,15 +303,14 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir.define(output);
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
-  m_offset_mask.define(output);
-  m_width_mask.define(output);
+
 }
 
 void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_Wtil.write(output);
   m_till_cover.write(output);
   m_hydrology_effective_pressure.write(output);
-  m_total_input_ghosts.write(output);
+  m_total_input_ghosts_temp.write(output);
   m_volume_water_flux.write(output);
   m_melt_rate_local.write(output);
   m_hydrosystem.write(output);
@@ -282,10 +319,6 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir.write(output);
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
-  m_processor_mask.write(output);
-  m_offset_mask.write(output);
-  m_width_mask.write(output);
-
 }
 
 
@@ -639,6 +672,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   IceModelVec::AccessList list{&mask, &m_velbase_mag};
   list.add(m_Wtil);
   list.add(m_total_input_ghosts);
+  list.add(m_total_input_ghosts_temp);
   list.add(m_till_cover);
   list.add(m_hydro_gradient);
   list.add(m_hydro_gradient_dir);
@@ -651,7 +685,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   list.add(m_hydrosystem);
   list.add(m_hydrology_fraction_overburden);
   list.add(m_gradient_permutation);
-
+  list.add(m_processor_mask);
+  list.add(m_offset_mask_u);
+  list.add(m_offset_mask_v);
+  list.add(m_width_mask_u);
+  list.add(m_width_mask_v);
 
 
   // first we need to find out if the water input is sufficient to fill up the till in the cell
@@ -781,6 +819,41 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       }
 
       counter++;
+  }
+
+
+//m_processor_mask
+//m_offset_mask
+//m_width_mask
+//m_total_input_ghosts
+// m_gradient_permutation
+
+  // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
+
+
+  {
+    m_processor_mask.put_on_proc0(*m_processor_mask_p0);
+    m_offset_mask_u.put_on_proc0(*m_offset_mask_u_p0);
+    m_offset_mask_v.put_on_proc0(*m_offset_mask_v_p0);
+    m_width_mask_u.put_on_proc0(*m_width_mask_u_p0);
+    m_width_mask_v.put_on_proc0(*m_width_mask_v_p0);
+    m_total_input_ghosts.put_on_proc0(*m_total_input_ghosts_p0);
+    m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
+    m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
+
+    ParallelSection rank0(m_grid->com);
+    try {
+      if (m_grid->rank() == 0) {
+//        petsc::VecArray mask_p0(*m_mask_p0);
+//        label_connected_components(mask_p0.get(), m_grid->My(), m_grid->Mx(), true, mask_grounded_ice);
+      }
+    } catch (...) {
+      rank0.failed();
+    }
+    rank0.check();
+
+    m_total_input_ghosts_temp.get_from_proc0(*m_total_input_ghosts_temp_p0);
+
   }
 
 

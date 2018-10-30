@@ -77,8 +77,8 @@ protected:
 
 private:
 
-  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_volume_water_flux, m_tunnel_cross_section, m_hydrosystem, m_surface_gradient, m_surface_elevation_temp,  m_bed_elevation_temp, m_hydrology_fraction_overburden, m_gradient_permutation, m_check_mask;
-  IceModelVec2V m_gradient_temp, m_hydro_gradient_dir, m_surface_gradient_dir, m_surface_gradient_temp, m_bed_gradient_temp;// directional gradient
+  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_volume_water_flux, m_tunnel_cross_section, m_hydrosystem, m_surface_gradient, m_surface_elevation_temp,  m_bed_elevation_temp, m_hydrology_fraction_overburden, m_gradient_permutation, m_processor_mask;
+  IceModelVec2V m_gradient_temp, m_hydro_gradient_dir, m_surface_gradient_dir, m_surface_gradient_temp, m_bed_gradient_temp, m_offset_mask, m_width_mask;// directional gradient
 
   void cell_coordinates(double in_number, int number_i, int number_j, int i_offset, int j_offset, int& i, int& j);
 

@@ -172,11 +172,25 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
  m_hydrosystem.metadata().set_double("valid_min", 0.0);
 
 
- m_check_mask.create(m_grid, "check_mask", WITHOUT_GHOSTS);
- m_check_mask.set_attrs("internal",
-                        "check for if a cell has been checked in the gradient sort",
+ m_processor_mask.create(m_grid, "processor_mask", WITHOUT_GHOSTS);
+ m_processor_mask.set_attrs("internal",
+                        "assigns a number for each processor",
                         "1", "");
- m_check_mask.metadata().set_double("valid_min", 0.0);
+ m_processor_mask.metadata().set_double("valid_min", 0.0);
+
+ m_offset_mask.create(m_grid, "offset_mask", WITHOUT_GHOSTS);
+ m_offset_mask.set_attrs("internal",
+                        "assigns the grid offset for each processor",
+                        "1", "");
+ m_offset_mask.metadata().set_double("valid_min", 0.0);
+
+ m_width_mask.create(m_grid, "width_mask", WITHOUT_GHOSTS);
+ m_width_mask.set_attrs("internal",
+                        "assigns the grid width for each processor",
+                        "1", "");
+ m_width_mask.metadata().set_double("valid_min", 0.0);
+
+
 
 
 }
@@ -207,6 +221,14 @@ void hydrologyEvan::init() {
 
   IceModelVec::AccessList list;
   list.add(m_gradient_permutation);
+  list.add(m_processor_mask);
+  list.add(m_offset_mask);
+  list.add(m_width_mask);
+
+  int i_offset = m_grid->xs();
+  int j_offset = m_grid->ys();
+  int sub_width_i = m_grid->xm();
+  int sub_width_j = m_grid->ym();
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
@@ -215,6 +237,11 @@ void hydrologyEvan::init() {
              "%i %i %i\n", i, j, counter);
 
     m_gradient_permutation(i, j) = counter;
+    m_processor_mask(i,j) = m_grid -> rank();
+    m_offset_mask(i,j).u = i_offset;
+    m_offset_mask(i,j).v = j_offset;
+    m_width_mask(i,j).u = sub_width_i;
+    m_width_mask(i,j).v = sub_width_j;
     counter++;
 
   }
@@ -238,7 +265,8 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir.define(output);
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
-  m_gradient_permutation.define(output);
+  m_offset_mask.define(output);
+  m_width_mask.define(output);
 }
 
 void hydrologyEvan::write_model_state_impl(const PIO &output) const {
@@ -254,7 +282,9 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir.write(output);
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
-  m_gradient_permutation.write(output);
+  m_processor_mask.write(output);
+  m_offset_mask.write(output);
+  m_width_mask.write(output);
 
 }
 
@@ -621,7 +651,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   list.add(m_hydrosystem);
   list.add(m_hydrology_fraction_overburden);
   list.add(m_gradient_permutation);
-  list.add(m_check_mask);
 
 
 
@@ -729,12 +758,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
        cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); // get the next permutation cell
 
-
-
         cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); // convert permutation to cell coordinates
-
-//  m_log->message(2,
- //            "* %i %i %i %i %f %f \n", i_now, j_now, i_next, j_next, m_hydro_gradient(i_current, j_current), m_hydro_gradient(i_compare, j_compare));
 
         if( m_hydro_gradient(i_current, j_current) < m_hydro_gradient(i_compare, j_compare)) { // swap if true
 

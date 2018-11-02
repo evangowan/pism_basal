@@ -1099,46 +1099,124 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
               // negative, because the water should flow in the direction opposite of the gradient 
               fraction_i = -(hydro_gradient_vec_u[index] / (fabs(hydro_gradient_vec_u[index])+fabs(hydro_gradient_vec_v[index])));
               fraction_j = -(hydro_gradient_vec_v[index] / (fabs(hydro_gradient_vec_u[index])+fabs(hydro_gradient_vec_v[index])));
-              
+
+
+
+              double distribute_angle = atan2(fraction_j, fraction_i);
+
+              bool no_i = false;
+              bool no_j = false;
               if (fraction_i >= 0.0) {
                 i_shift = i_temp + 1;
                 if(i_shift >= num_i) {
-                   i_shift = num_i;
-                   fraction_i = 0.0; // do nothing
+                   i_shift = i_temp;
+                   no_i = true; // do nothing
                 }
 
               } else {
                 i_shift = i_temp-1;
                 if(i_shift < 0) {
                    i_shift = 0;
-                   fraction_i = 0.0; // do nothing
+                   no_i = true; // do nothing
                 }
               }
 
               if (fraction_j >= 0.0) {
                 j_shift = j_temp + 1;
                 if(j_shift >= num_j) {
-                   j_shift = num_j;
-                   fraction_j = 0.0; // do nothing
+                   j_shift = j_temp;
+                   no_j = true; // do nothing
                 }
 
               } else {
                 j_shift = j_temp-1;
                 if(j_shift < 0) {
                    j_shift = 0;
-                   fraction_j = 0.0; // do nothing
+                   no_j = true; // do nothing
                 }
               }
 
+
               int i_index = j_temp * num_i + i_shift;
               int j_index = j_shift * num_i + i_temp;
+              int i_j_index = j_shift * num_i + i_shift;
 
+              // in between cardinal directions, put the water in the diagonal box
+
+              double distribute_i, distribute_j, distribute_i_j;
+
+              distribute_angle = fabs(distribute_angle);
+
+              if (distribute_angle > 0.0 && distribute_angle < M_PI / 2.0 ) {
+
+                distribute_angle = distribute_angle * 2.0;
+
+                double temp_x = cos(distribute_angle);
+                double temp_y = sin(distribute_angle);
+
+                double fraction_x_temp = fabs(temp_x) / (fabs(temp_x) + fabs(temp_y));
+                double fraction_y_temp = fabs(temp_y) / (fabs(temp_x) + fabs(temp_y));
+
+
+
+                if (temp_x > 0.0) { 
+                  distribute_i = fraction_x_temp;
+                  distribute_j = 0.0;
+                } else {
+                  distribute_j = fraction_x_temp;
+                  distribute_i = 0.0;
+                }
+                distribute_i_j = fraction_y_temp;
+
+
+              } else if (distribute_angle > M_PI && distribute_angle < M_PI  ) {
+
+                distribute_angle = (distribute_angle - M_PI / 2.0) * 2.0;
+
+                double temp_x = cos(distribute_angle);
+                double temp_y = sin(distribute_angle);
+
+                double fraction_x_temp = fabs(temp_x) / (fabs(temp_x) + fabs(temp_y));
+                double fraction_y_temp = fabs(temp_y) / (fabs(temp_x) + fabs(temp_y));
+
+                if (temp_x > 0.0) { 
+                  distribute_j = fraction_x_temp;
+                  distribute_i = 0.0;
+                } else {
+                  distribute_i = fraction_x_temp;
+                  distribute_j = 0.0;
+                }
+                distribute_i_j = fraction_y_temp;
+              } else {
+
+                distribute_i = fabs(fraction_i);
+                distribute_j = fabs(fraction_j);
+                distribute_i_j = 0.0;
+
+              }
+
+              if (no_i) {
+                distribute_i = 0.0;
+                distribute_i_j = 0.0;
+              }
+
+              if(no_j) {
+               distribute_j = 0.0;
+               distribute_i_j = 0.0;
+              }
+
+
+   m_log->message(2,
+            "* distributing: %f %f %f %f %f %f \n", fraction_i, fraction_j, distribute_i, distribute_j, distribute_i_j, distribute_i + distribute_j + distribute_i_j);
 
 //   m_log->message(2,
 //            "* distributing bef: %i %i %i %i %f %f %f\n", i_temp, j_temp, i_shift, j_shift, total_input_ghosts_temp_vec[index], total_input_ghosts_temp_vec[i_index], total_input_ghosts_temp_vec[j_index]);
 
-		  total_input_ghosts_temp_vec[i_index] = total_input_ghosts_temp_vec[i_index] + fabs(fraction_i) * total_input_ghosts_temp_vec[index];
-		  total_input_ghosts_temp_vec[j_index] = total_input_ghosts_temp_vec[j_index] + fabs(fraction_j) * total_input_ghosts_temp_vec[index];
+		  total_input_ghosts_temp_vec[i_index] = total_input_ghosts_temp_vec[i_index] + distribute_i * total_input_ghosts_temp_vec[index];
+		  total_input_ghosts_temp_vec[j_index] = total_input_ghosts_temp_vec[j_index] + distribute_j * total_input_ghosts_temp_vec[index];
+		  total_input_ghosts_temp_vec[i_j_index] = total_input_ghosts_temp_vec[i_j_index] + distribute_i_j * total_input_ghosts_temp_vec[index];
+
+
 //   if (i_temp == j_temp) {
 //   m_log->message(2,
 //            "* distributing aft: %i %i %i %i %f %f %f %f %f %f %f %f\n", i_temp, j_temp, i_shift, j_shift, total_input_ghosts_temp_vec[index], total_input_ghosts_temp_vec[i_index], total_input_ghosts_temp_vec[j_index], hydro_gradient_vec[index], hydro_gradient_vec[i_index], hydro_gradient_vec[j_index]);

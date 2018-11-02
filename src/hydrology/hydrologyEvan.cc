@@ -79,11 +79,15 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "temporary storage for the bed gradient",
                         "1", "");
 
-  m_gradient_temp.create(m_grid, "gradient_temp", WITHOUT_GHOSTS);
-  m_gradient_temp.set_attrs("internal",
+  m_gradient_temp_u.create(m_grid, "gradient_temp_u", WITHOUT_GHOSTS);
+  m_gradient_temp_u.set_attrs("internal",
                         "gradient at the base",
                         "Pa m-1", "");
 
+  m_gradient_temp_v.create(m_grid, "gradient_temp_v", WITHOUT_GHOSTS);
+  m_gradient_temp_v.set_attrs("internal",
+                        "gradient at the base",
+                        "Pa m-1", "");
 
 
   m_hydro_gradient.create(m_grid, "hydro_gradient", WITHOUT_GHOSTS);
@@ -91,10 +95,16 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "pressure gradient at the base",
                         "Pa m-1", "");
 
-  m_hydro_gradient_dir.create(m_grid, "hydro_gradient_dir", WITHOUT_GHOSTS);
-  m_hydro_gradient_dir.set_attrs("internal",
-                        "potential gradient at the base in directional components",
+  m_hydro_gradient_dir_u.create(m_grid, "hydro_gradient_dir_u", WITHOUT_GHOSTS);
+  m_hydro_gradient_dir_u.set_attrs("internal",
+                        "potential gradient at the base in directional components, u",
                         "Pa m-1", "");
+
+  m_hydro_gradient_dir_v.create(m_grid, "hydro_gradient_dir_v", WITHOUT_GHOSTS);
+  m_hydro_gradient_dir_v.set_attrs("internal",
+                        "potential gradient at the base in directional components, v",
+                        "Pa m-1", "");
+
 
   m_surface_gradient.create(m_grid, "hydro_surface_gradient", WITHOUT_GHOSTS);
   m_surface_gradient.set_attrs("internal",
@@ -105,6 +115,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_surface_gradient_dir.set_attrs("internal",
                         "surface gradient in hydrology directional components",
                         "1", "");
+
 
   m_surface_elevation_temp.create(m_grid, "surface_elevation_temp", WITH_GHOSTS, stencil_width);
   m_surface_elevation_temp.set_attrs("model_state",
@@ -228,7 +239,8 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_total_input_ghosts_temp_p0 = m_total_input_ghosts_temp.allocate_proc0_copy();
   m_gradient_permutation_p0 =m_gradient_permutation.allocate_proc0_copy();
   m_hydro_gradient_p0 = m_hydro_gradient.allocate_proc0_copy();
-
+  m_hydro_gradient_dir_u_p0 = m_hydro_gradient_dir_u.allocate_proc0_copy();
+  m_hydro_gradient_dir_v_p0 = m_hydro_gradient_dir_v.allocate_proc0_copy();
 
 
 }
@@ -303,9 +315,11 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydrosystem.define(output);
   m_velbase_mag.define(output);
   m_hydro_gradient.define(output);
-  m_hydro_gradient_dir.define(output);
+  m_hydro_gradient_dir_u.define(output);
+  m_hydro_gradient_dir_v.define(output);
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
+  m_processor_mask.define(output);
 
 }
 
@@ -314,14 +328,17 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_till_cover.write(output);
   m_hydrology_effective_pressure.write(output);
   m_total_input_ghosts_temp.write(output);
+  m_total_input_ghosts.write(output);
   m_volume_water_flux.write(output);
   m_melt_rate_local.write(output);
   m_hydrosystem.write(output);
   m_velbase_mag.write(output);
   m_hydro_gradient.write(output);
-  m_hydro_gradient_dir.write(output);
+  m_hydro_gradient_dir_u.write(output);
+  m_hydro_gradient_dir_v.write(output);
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
+  m_processor_mask.write(output);
 }
 
 
@@ -362,7 +379,7 @@ void hydrologyEvan::update_surface_runoff(IceModelVec2S &result) {
 
 
 // potential gradient at the base of the ice sheet
-void hydrologyEvan::potential_gradient(IceModelVec2V &result) {
+void hydrologyEvan::potential_gradient(IceModelVec2S &result_u, IceModelVec2S &result_v) {
 
   double rho_i       = m_config->get_double("constants.ice.density");
   double rho_w       = m_config->get_double("constants.fresh_water.density");
@@ -383,7 +400,8 @@ void hydrologyEvan::potential_gradient(IceModelVec2V &result) {
   list.add(m_pressure_temp);
   list.add(m_surface_gradient_temp);
   list.add(m_bed_gradient_temp);
-  list.add(m_gradient_temp);
+  list.add(m_gradient_temp_u);
+  list.add(m_gradient_temp_v);
 
 
   // grab the bed and surface gradients
@@ -396,13 +414,14 @@ void hydrologyEvan::potential_gradient(IceModelVec2V &result) {
     // Equation 6.13 in Cuffy and Paterson (2010)
     // The flotation fraction is the ratio of the pressure of water to the pressure of ice, and will influence the effect of the bed gradient on the total potential gradient
     // At a default, it is set to 0.8, which gives means the bed slope needs to be 2.7 times greater than the surface slope to have an equal influence on the direction of water flow.
-    m_gradient_temp(i,j).u = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
-    m_gradient_temp(i,j).v = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
+    m_gradient_temp_u(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
+    m_gradient_temp_v(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
 
 
   }
 
-  result.copy_from(m_gradient_temp);
+  result_u.copy_from(m_gradient_temp_u);
+  result_v.copy_from(m_gradient_temp_v);
 
 //  m_log->message(2,
 //             "* Finished hydrologyEvan::potential_gradient ...\n");
@@ -678,7 +697,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   list.add(m_total_input_ghosts_temp);
   list.add(m_till_cover);
   list.add(m_hydro_gradient);
-  list.add(m_hydro_gradient_dir);
+  list.add(m_hydro_gradient_dir_u);
+  list.add(m_hydro_gradient_dir_v);
   list.add(m_surface_gradient);
   list.add(m_surface_gradient_dir);
   list.add(m_tunnel_cross_section);
@@ -693,6 +713,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   list.add(m_offset_mask_v);
   list.add(m_width_mask_u);
   list.add(m_width_mask_v);
+
+
+
 
 
   // first we need to find out if the water input is sufficient to fill up the till in the cell
@@ -752,7 +775,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_total_input_ghosts.update_ghosts();
 
   // we're going to need the potential gradient
-  potential_gradient(m_hydro_gradient_dir);
+  potential_gradient(m_hydro_gradient_dir_u,m_hydro_gradient_dir_v);
   surface_gradient(m_surface_gradient_dir);
 
   // find the magnitude of the potential gradient
@@ -760,7 +783,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-     m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir(i,j).v,2.0) + pow(m_hydro_gradient_dir(i,j).u,2.0));
+     m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
   }
 
   // sort the permutation array
@@ -833,7 +856,13 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
 
+// Note: temporary cheat, uncomment this line when not cheating
+//  m_total_input_ghosts_temp.copy_from(m_total_input_ghosts);
 
+  m_total_input_ghosts_temp.set(0.1);
+
+  m_log->message(2,
+             "* starting serial process ...\n");
   {
     m_processor_mask.put_on_proc0(*m_processor_mask_p0);
     m_offset_mask_u.put_on_proc0(*m_offset_mask_u_p0);
@@ -844,11 +873,16 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
-
+    m_hydro_gradient_dir_u.put_on_proc0(*m_hydro_gradient_dir_u_p0);
+    m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
 
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
+  m_log->message(2,
+             "* in serial process ...\n");
+
+
 
         petsc::VecArray processor_mask_p0(*m_processor_mask_p0);
         petsc::VecArray offset_mask_u_p0(*m_offset_mask_u_p0);
@@ -859,6 +893,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         petsc::VecArray total_input_ghosts_temp_p0(*m_total_input_ghosts_temp_p0);
         petsc::VecArray gradient_permutation_p0(*m_gradient_permutation_p0);
         petsc::VecArray hydro_gradient_p0(*m_hydro_gradient_p0);
+        petsc::VecArray hydro_gradient_p0_vec_u(*m_hydro_gradient_dir_u_p0);
+        petsc::VecArray hydro_gradient_p0_vec_v(*m_hydro_gradient_dir_v_p0);
+
 
         double* processor_mask_vec =  processor_mask_p0.get();
         double* offset_mask_u_vec =  offset_mask_u_p0.get();
@@ -869,7 +906,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double* total_input_ghosts_temp_vec =  total_input_ghosts_temp_p0.get();
         double* gradient_permutation_vec =  gradient_permutation_p0.get();
         double* hydro_gradient_vec =  hydro_gradient_p0.get();
+        double* hydro_gradient_vec_u = hydro_gradient_p0_vec_u.get();
+        double* hydro_gradient_vec_v = hydro_gradient_p0_vec_v.get();
 
+
+  m_log->message(2,
+             "* switched up memory ...\n");
 
         int total_nodes = m_grid->xm() * m_grid->ym();
 
@@ -889,13 +931,23 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // Fill up those arrays
 
-        int num_i = m_grid->xm();
-        int num_j = m_grid->ym();
+        int num_i = m_grid->Mx();
+        int num_j = m_grid->My();
 
-        for (int j = 0; num_j-1; j++) {
-          for (int i = 0; num_i-1; i++) {
+
+
+  m_log->message(2,
+             "* assigning first arrays ...\n");
+
+
+
+        for (int j = 0; j < num_j; j++) {
+          for (int i = 0; i < num_i; i++) {
 
             vector_index = j*num_i + i;
+
+ // m_log->message(2,
+ //            "* %i %i %i %i\n", i, j, num_i, num_j);
 
             processor = processor_mask_vec[vector_index];
             processor_point_counter[processor]++; // increment the number of points in that particular processor
@@ -908,36 +960,206 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             processor_width_mask_v[processor] = width_mask_v_vec[vector_index];
             processor_offset_mask_u[processor] = offset_mask_u_vec[vector_index];
             processor_offset_mask_v[processor] = offset_mask_v_vec[vector_index];
+
+//  m_log->message(2,
+//             "* %i %i %i %i %f %i %f %f\n", i, j, num_i, num_j, vector_index, processor_mask_vec[vector_index], offset_mask_u_vec[vector_index], offset_mask_v_vec[vector_index]);
           }
         }
 
+  m_log->message(2,
+             "* assigned first arrays ...\n");
 
         // read in the permutation and separate per processor
         double serial_permutation[number_of_processors][max_points];
+        double gradient_storage[number_of_processors][max_points]; // used to reduce the amount of calculations
+        int i_array[number_of_processors][max_points];
+        int j_array[number_of_processors][max_points];
 
-        for(int k = 0; number_of_processors; k++) {
+        for(int k = 0; k < number_of_processors; k++) {
 
           processor_point_counter[k] =-1; // first point will be zero, which will give the correct index
         }
 
+        int i_temp, j_temp, permutation_index;
 
-        for (int i = 0; m_grid->xm(); i++) {
-          for (int j = 0; m_grid->ym(); j++) {
+  m_log->message(2,
+             "* assigning second arrays ...\n");
+
+        for (int j = 0; j < num_j; j++) {
+          for (int i = 0; i < num_i; i++) {
 
             vector_index = j*num_i + i;
 
+//  m_log->message(2,
+//            "* %i %i %i %f\n", i, j, vector_index), processor_mask_vec[vector_index];
+
             processor = processor_mask_vec[vector_index];
             processor_point_counter[processor]++; // increment the number of points in that particular processor
-            serial_permutation[processor][processor_point_counter[processor]] = gradient_permutation_vec[vector_index];
+
+
+
+//  m_log->message(2,
+//             "* %f %i %i %f %f %i %i\n", gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
+            
+            cell_coordinates(gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
+
+            permutation_index = j_temp * num_j + i_temp;
+
+            gradient_storage[processor][processor_point_counter[processor]] = hydro_gradient_vec[permutation_index]; // should be highest to lowest
+
+            serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
+
+ // m_log->message(2,
+ //            "* %i %i %f\n", processor, processor_point_counter[processor], hydro_gradient_vec[permutation_index]);
+
           }
         }
 
+        // move the point count to a separate variable
+        int max_point_count[number_of_processors];
 
-        double gradient_storage[number_of_processors]; // used to reduce the amount of calculations
+        // rezero the point counter. C++ is not as nice as Fortran for this
+        for (counter = 0; counter < number_of_processors; counter ++) {
+          max_point_count[counter] = processor_point_counter[counter];
+          processor_point_counter[counter] = 0;
+
+        }
 
 
-//        petsc::VecArray mask_p0(*m_mask_p0);
-//        label_connected_components(mask_p0.get(), m_grid->My(), m_grid->Mx(), true, mask_grounded_ice);
+     // distribute the water
+  m_log->message(2,
+             "* distributing water ...\n");
+
+        bool finished = false;
+
+        int lowest_index, lowest_processor;
+        double lowest_gradient;
+
+        while (! finished) {
+
+          // find the lowest index of the lowest gradient
+
+
+
+          bool found_first = false;
+
+//  m_log->message(2,
+//            "* number proc: %i\n", number_of_processors);
+          for (int processor_counter = 0; processor_counter < number_of_processors; processor_counter++) {
+
+//  m_log->message(2,
+//            "* test: %i %i %i %f\n", processor_counter, number_of_processors, processor_point_counter[processor_counter], gradient_storage[processor_counter][processor_point_counter[processor_counter]]);
+
+            if(processor_point_counter[processor_counter] <= max_point_count[processor_counter]) { // check if the processor still has points to check
+
+//  m_log->message(2,
+//            "* check proc: %i %i %i %f\n", processor_counter, processor_point_counter[processor_counter], max_point_count[processor_counter], gradient_storage[processor_counter][processor_point_counter[processor_counter]]); 
+
+              if(! found_first) {
+                lowest_gradient = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
+                lowest_index = processor_point_counter[processor_counter];
+                lowest_processor = processor_counter;
+                found_first = true;
+              } else {
+ 
+                if( gradient_storage[processor_counter][processor_point_counter[processor_counter]] < lowest_gradient) { // use this as the next point
+                  lowest_gradient = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
+                  lowest_index = processor_point_counter[processor_counter];
+                  lowest_processor = processor_counter;
+                }
+
+              }
+            }
+
+          }
+
+//  m_log->message(2,
+//            "* lowest: %i %i %i %f\n", lowest_processor, lowest_index, max_point_count[lowest_processor], lowest_gradient); 
+
+          if (found_first) { 
+
+
+ // m_log->message(2,
+  //          "* %i %i %f\n", lowest_processor, processor_point_counter[lowest_index], gradient_storage[lowest_processor][processor_point_counter[lowest_index]]);
+
+
+
+            if (gradient_storage[lowest_processor][lowest_index] > 1e-9) { // distribute water
+
+              int index = serial_permutation[lowest_processor][lowest_index];
+
+              cell_coordinates(serial_permutation[lowest_processor][lowest_index], num_i, num_j, 0, 0, i_temp, j_temp);
+
+              int i_shift, j_shift;
+
+              double fraction_i, fraction_j;
+
+ //  m_log->message(2,
+   //         "* directions: %f %f %f \n", abs(hydro_gradient_vec_u[index]),abs(hydro_gradient_vec_v[index]) abs(hydro_gradient_vec_u[index])+abs(hydro_gradient_vec_v[index]));
+              // negative, because the water should flow in the direction opposite of the gradient 
+              fraction_i = -(hydro_gradient_vec_u[index] / (fabs(hydro_gradient_vec_u[index])+fabs(hydro_gradient_vec_v[index])));
+              fraction_j = -(hydro_gradient_vec_v[index] / (fabs(hydro_gradient_vec_u[index])+fabs(hydro_gradient_vec_v[index])));
+              
+              if (fraction_i >= 0.0) {
+                i_shift = i_temp + 1;
+                if(i_shift >= num_i) {
+                   i_shift = num_i;
+                   fraction_i = 0.0; // do nothing
+                }
+
+              } else {
+                i_shift = i_temp-1;
+                if(i_shift < 0) {
+                   i_shift = 0;
+                   fraction_i = 0.0; // do nothing
+                }
+              }
+
+              if (fraction_j >= 0.0) {
+                j_shift = j_temp + 1;
+                if(j_shift >= num_j) {
+                   j_shift = num_j;
+                   fraction_j = 0.0; // do nothing
+                }
+
+              } else {
+                j_shift = j_temp-1;
+                if(j_shift < 0) {
+                   j_shift = 0;
+                   fraction_j = 0.0; // do nothing
+                }
+              }
+
+              int i_index = j_temp * num_i + i_shift;
+              int j_index = j_shift * num_i + i_temp;
+
+
+//   m_log->message(2,
+//            "* distributing bef: %i %i %i %i %f %f %f\n", i_temp, j_temp, i_shift, j_shift, total_input_ghosts_temp_vec[index], total_input_ghosts_temp_vec[i_index], total_input_ghosts_temp_vec[j_index]);
+
+		  total_input_ghosts_temp_vec[i_index] = total_input_ghosts_temp_vec[i_index] + fabs(fraction_i) * total_input_ghosts_temp_vec[index];
+		  total_input_ghosts_temp_vec[j_index] = total_input_ghosts_temp_vec[j_index] + fabs(fraction_j) * total_input_ghosts_temp_vec[index];
+//   if (i_temp == j_temp) {
+//   m_log->message(2,
+//            "* distributing aft: %i %i %i %i %f %f %f %f %f %f %f %f\n", i_temp, j_temp, i_shift, j_shift, total_input_ghosts_temp_vec[index], total_input_ghosts_temp_vec[i_index], total_input_ghosts_temp_vec[j_index], hydro_gradient_vec[index], hydro_gradient_vec[i_index], hydro_gradient_vec[j_index]);
+ //  }
+            }
+
+             processor_point_counter[lowest_processor]++;
+
+//   m_log->message(2,
+//            "* processor counter: %i %i\n", lowest_processor, processor_point_counter[lowest_processor]);
+
+          } else {
+
+            finished = true;
+
+          }
+
+        }
+
+
+
       }
     } catch (...) {
       rank0.failed();

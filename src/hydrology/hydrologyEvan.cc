@@ -848,12 +848,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   }
 
 
-//m_processor_mask
-//m_offset_mask
-//m_width_mask
-//m_total_input_ghosts
-// m_gradient_permutation
-
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
 
 // Note: temporary cheat, uncomment this line when not cheating
@@ -949,9 +943,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Fill up those arrays
 
 
-
-
-
   m_log->message(2,
              "* assigning first arrays ...\n");
 
@@ -962,8 +953,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             vector_index = j*num_i + i;
 
- // m_log->message(2,
- //            "* %i %i %i %i\n", i, j, num_i, num_j);
 
             processor = processor_mask_vec[vector_index];
             processor_point_counter[processor]++; // increment the number of points in that particular processor
@@ -977,8 +966,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             processor_offset_mask_u[processor] = offset_mask_u_vec[vector_index];
             processor_offset_mask_v[processor] = offset_mask_v_vec[vector_index];
 
-//  m_log->message(2,
-//             "* %i %i %i %i %f %i %f %f\n", i, j, num_i, num_j, vector_index, processor_mask_vec[vector_index], offset_mask_u_vec[vector_index], offset_mask_v_vec[vector_index]);
           }
         }
 
@@ -1006,16 +993,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             vector_index = j*num_i + i;
 
-//  m_log->message(2,
-//            "* %i %i %i %f\n", i, j, vector_index), processor_mask_vec[vector_index];
-
             processor = processor_mask_vec[vector_index];
             processor_point_counter[processor]++; // increment the number of points in that particular processor
 
-
-
-//  m_log->message(2,
-//             "* %f %i %i %f %f %i %i\n", gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
             
             cell_coordinates(gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
 
@@ -1025,8 +1005,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
 
- // m_log->message(2,
- //            "* %i %i %f\n", processor, processor_point_counter[processor], hydro_gradient_vec[permutation_index]);
 
           }
         }
@@ -1055,12 +1033,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           // find the lowest index of the lowest gradient
 
-
-
           bool found_first = false;
 
-//  m_log->message(2,
-//            "* number proc: %i\n", number_of_processors);
           for (int processor_counter = 0; processor_counter < number_of_processors; processor_counter++) {
 
 
@@ -1227,8 +1201,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         }
 
-
-
       }
     } catch (...) {
       rank0.failed();
@@ -1266,8 +1238,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     // Water discharge
     // Arnold and Sharp (2002) assumed the volume water flux was the same through tunnels and cavities
-
-
 
     m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
 

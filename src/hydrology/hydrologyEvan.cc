@@ -864,12 +864,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   int num_i = m_grid->Mx();
   int num_j = m_grid->My();
-
+  double seconds_in_year = 365.0*24.0*3600.0;
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
      if(i < num_i/2 && j < num_j / 2) {
-       m_total_input_ghosts_temp(i,j) = 0.1;
+       m_total_input_ghosts_temp(i,j) = 1.0 / seconds_in_year;
      } else {
        m_total_input_ghosts_temp(i,j) = 0.0;
      }
@@ -1276,6 +1276,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
     m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
+
+//  m_log->message(2,
+//             "* %f %f %f %f\n", m_volume_water_flux(i,j), tunnel_spacing, pow(tunnel_spacing,2), m_total_input_ghosts(i,j));
+
 
       if(m_volume_water_flux(i,j) > 1000.0) {
 

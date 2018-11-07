@@ -879,7 +879,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_offset_mask_v.put_on_proc0(*m_offset_mask_v_p0);
     m_width_mask_u.put_on_proc0(*m_width_mask_u_p0);
     m_width_mask_v.put_on_proc0(*m_width_mask_v_p0);
-    m_total_input_ghosts.put_on_proc0(*m_total_input_ghosts_p0);
     m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
@@ -899,7 +898,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         petsc::VecArray offset_mask_v_p0(*m_offset_mask_v_p0);
         petsc::VecArray width_mask_u_p0(*m_width_mask_u_p0);
         petsc::VecArray width_mask_v_p0(*m_width_mask_v_p0);
-        petsc::VecArray total_input_ghosts_p0(*m_total_input_ghosts_p0);
         petsc::VecArray total_input_ghosts_temp_p0(*m_total_input_ghosts_temp_p0);
         petsc::VecArray gradient_permutation_p0(*m_gradient_permutation_p0);
         petsc::VecArray hydro_gradient_p0(*m_hydro_gradient_p0);
@@ -912,7 +910,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double* offset_mask_v_vec =  offset_mask_v_p0.get();
         double* width_mask_u_vec =  width_mask_u_p0.get();
         double* width_mask_v_vec =  width_mask_v_p0.get();
-        double* total_input_ghosts_vec =  total_input_ghosts_p0.get();
         double* total_input_ghosts_temp_vec =  total_input_ghosts_temp_p0.get();
         double* gradient_permutation_vec =  gradient_permutation_p0.get();
         double* hydro_gradient_vec =  hydro_gradient_p0.get();

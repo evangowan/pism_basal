@@ -909,6 +909,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double* hydro_gradient_vec_u = hydro_gradient_p0_vec_u.get();
         double* hydro_gradient_vec_v = hydro_gradient_p0_vec_v.get();
 
+        double pi = 3.14159265358979;
 
   m_log->message(2,
              "* switched up memory ...\n");
@@ -1081,11 +1082,204 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
               int index = serial_permutation[lowest_processor][lowest_index];
 
-              cell_coordinates(serial_permutation[lowest_processor][lowest_index], num_i, num_j, 0, 0, i_temp, j_temp);
+              cell_coordinates(index, num_i, num_j, 0, 0, i_temp, j_temp);
+
+              // find angular direction of the maximum gradient
+
+              double direction = atan2(-hydro_gradient_vec_v[index], -hydro_gradient_vec_u[index]);
+
+              double min_direction = direction - pi / 2.0;
+              if(min_direction < -pi) {
+                min_direction = 2.0 * pi + min_direction;
+              }
 
 
+
+
+              double max_direction = direction + pi / 2.0;
+              if(max_direction > pi) {
+                max_direction =    max_direction - 2.0 * pi;
+              }
+
+              bool check_two = false;
+              double max_direction_2, min_direction_2;
+              if(min_direction > 0.0 && max_direction < 0.0) { // need two checks
+                check_two = true;
+                min_direction_2 = -pi;
+                max_direction_2 = max_direction;
+                max_direction = pi;
+              }
+
+
+              double water_store_multiplier[12];
+              double total = 0;
+              double current_dir, next_dir, angle_to_min_current, angle_to_min_next, angle_to_max_current, angle_to_max_next;
+
+              for ( int dir_counter = 0; dir_counter < 12; dir_counter++){
+
+                current_dir = -pi + double(dir_counter) * pi / 6.0;
+                next_dir = -pi + double(dir_counter+1) * pi / 6.0;
+
+                bool add_to_distribution = false;
+
+                if (min_direction > current_dir && min_direction < next_dir) { // move current dir to min_direction
+                  current_dir = min_direction;
+                }
+
+                if (max_direction > current_dir && max_direction < next_dir) { // move next_dir to max_direction
+                  next_dir = max_direction;
+                }
+
+                if(check_two) {
+                  if (max_direction_2 > current_dir && max_direction_2 < next_dir) { // move next_dir to max_direction
+                   next_dir = max_direction_2;
+                  }
+                }
+
+                bool distribute = false;
+
+                if(current_dir >= min_direction && next_dir <= max_direction) { // distribute water
+                  distribute = true;
+                }
+
+                if(check_two) {
+                  if(current_dir >= min_direction_2 && next_dir <= max_direction_2) { // distribute water
+                    distribute = true;
+                  }
+                }
+
+    
+//  m_log->message(2,
+//             "* %i  %f %f %f \n", dir_counter, current_dir, next_dir, direction);
+
+/*
+                if(current_dir > 0.0 && min_direction < 0.0) {
+                  angle_to_min_current = (2.0*pi + min_direction) - current_dir;
+                }else {
+                  angle_to_min_current = min_direction - current_dir;
+                }
+
+                if(angle_to_min_current < 0.0) {
+                  angle_to_min_current = 2.0 * pi + angle_to_min_current;
+                }
+
+
+                if(next_dir > 0.0 && min_direction < 0.0) {
+                  angle_to_min_next = (2.0*pi + min_direction) - next_dir;
+                }else {
+                  angle_to_min_next = min_direction - next_dir;
+                }
+
+                if(angle_to_min_next < 0.0) {
+                  angle_to_min_next = 2.0 * pi + angle_to_min_next;
+                }
+
+                if(current_dir > 0.0 && max_direction < 0.0) {
+                  angle_to_max_current = (2.0*pi + max_direction) - current_dir;
+                }else {
+                  angle_to_max_current = max_direction - current_dir;
+                }
+
+                if(angle_to_max_current < 0.0) {
+                  angle_to_max_current = 2.0 * pi + angle_to_max_current;
+                }
+
+                if(next_dir > 0.0 && max_direction < 0.0) {
+                  angle_to_max_next = (2.0*pi + max_direction) - next_dir;
+                }else {
+                  angle_to_max_next = max_direction - next_dir;
+                }
+
+                if(angle_to_max_next < 0.0) {
+                  angle_to_max_next = 2.0 * pi + angle_to_max_next;
+                }
+
+                if (angle_to_min_current < pi / 6.0 && angle_to_min_next > pi / 6.0) { // this means the min vector should be between
+                  current_dir = min_direction;
+                  angle_to_min_current = 0;
+                }
+
+                if (angle_to_max_current < pi / 6.0 && angle_to_max_next > pi / 6.0) { // this means the max vector should be between
+                  next_dir = max_direction;
+                  angle_to_max_current = 0;
+                }
+*/
+                if(distribute) { // distribute water
+
+                  // this is a cos^2 function, integrated, and scaled to have the sum under the curve be 1
+                  water_store_multiplier[dir_counter] = 2.0/pi * ( ((next_dir + direction) / 2.0 + sin(2.0*(next_dir+direction)) / 4.0) - 
+                                                                  ((current_dir + direction) / 2.0 + sin(2.0*(current_dir+direction)) / 4.0));
+/*
+if (check_two) {
+  m_log->message(2,
+             "* %i %f %f %f %f %f %f %i \n", dir_counter, water_store_multiplier[dir_counter], current_dir, next_dir, min_direction, direction, max_direction_2, check_two);
+
+} else {
+  m_log->message(2,
+             "* %i %f %f %f %f %f %f %i\n", dir_counter, water_store_multiplier[dir_counter], current_dir, next_dir, min_direction, direction, max_direction, check_two);
+}
+*/
+                  total = total + water_store_multiplier[dir_counter];
+
+                } else {
+
+                  water_store_multiplier[dir_counter] = 0;
+
+                }
+
+
+              }
+
+              int neighbor_index =  index - 1; // goes left
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[0]*total_input_ghosts_temp_vec[index]
+                                                            + water_store_multiplier[11]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index + (-1) + (-1) * num_i; // goes down left
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[1]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index +  (-1) * num_i; // goes down
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[2]*total_input_ghosts_temp_vec[index]
+                                                            + water_store_multiplier[3]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index + (1) + (-1) * num_i; // goes down right
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[4]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index + 1; // goes right
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[5]*total_input_ghosts_temp_vec[index]
+                                                            + water_store_multiplier[6]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index + (1) + (1) * num_i; // goes up right
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[7]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index +  (1) * num_i; // goes up
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[8]*total_input_ghosts_temp_vec[index]
+                                                            + water_store_multiplier[9]*total_input_ghosts_temp_vec[index];
+
+              neighbor_index =  index + (-1) + (1) * num_i; // goes up left
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+                                                            + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
+
+
+  //            int neighbor_index =  index + (i_m - 1) + (j_m - 1) * num_i;
+
+/*
+  m_log->message(2,
+             "* %i %f %f \n", index, gradient_storage[lowest_processor][lowest_index], total);
+*/
+
+
+
+
+
+/*
               // create gradient and length matrix
-
 
               double gradient_matrix[3][3], length_matrix[3][3];
 
@@ -1126,9 +1320,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
                 double common_term = total_input_ghosts_temp_vec[index] / gradient_length_sum;
 
-  m_log->message(2,
-            "* test: %f %f %f %f\n",  total_input_ghosts_temp_vec[index], gradient_length_sum, common_term, middle_gradient * common_term);
-
 
                 // each cell with a higher gradient receives water
 
@@ -1147,7 +1338,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                 }
 
               }
-
+*/
             }
 
             processor_point_counter[lowest_processor]++;

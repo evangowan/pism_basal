@@ -859,7 +859,23 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 // Note: temporary cheat, uncomment this line when not cheating
 //  m_total_input_ghosts_temp.copy_from(m_total_input_ghosts);
 
-  m_total_input_ghosts_temp.set(0.1);
+//  m_total_input_ghosts_temp.set(0.1);
+
+
+  int num_i = m_grid->Mx();
+  int num_j = m_grid->My();
+
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+     if(i < num_i/2 && j < num_j / 2) {
+       m_total_input_ghosts_temp(i,j) = 0.1;
+     } else {
+       m_total_input_ghosts_temp(i,j) = 0.0;
+     }
+
+  }
+ 
 
   m_log->message(2,
              "* starting serial process ...\n");
@@ -932,8 +948,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // Fill up those arrays
 
-        int num_i = m_grid->Mx();
-        int num_j = m_grid->My();
+
 
 
 
@@ -1048,13 +1063,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //            "* number proc: %i\n", number_of_processors);
           for (int processor_counter = 0; processor_counter < number_of_processors; processor_counter++) {
 
-//  m_log->message(2,
-//            "* test: %i %i %i %f\n", processor_counter, number_of_processors, processor_point_counter[processor_counter], gradient_storage[processor_counter][processor_point_counter[processor_counter]]);
+
 
             if(processor_point_counter[processor_counter] <= max_point_count[processor_counter]) { // check if the processor still has points to check
 
-//  m_log->message(2,
-//            "* check proc: %i %i %i %f\n", processor_counter, processor_point_counter[processor_counter], max_point_count[processor_counter], gradient_storage[processor_counter][processor_point_counter[processor_counter]]); 
+
 
               if(! found_first) {
                 lowest_gradient = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
@@ -1148,82 +1161,18 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                   }
                 }
 
-    
-//  m_log->message(2,
-//             "* %i  %f %f %f \n", dir_counter, current_dir, next_dir, direction);
-
-/*
-                if(current_dir > 0.0 && min_direction < 0.0) {
-                  angle_to_min_current = (2.0*pi + min_direction) - current_dir;
-                }else {
-                  angle_to_min_current = min_direction - current_dir;
-                }
-
-                if(angle_to_min_current < 0.0) {
-                  angle_to_min_current = 2.0 * pi + angle_to_min_current;
-                }
-
-
-                if(next_dir > 0.0 && min_direction < 0.0) {
-                  angle_to_min_next = (2.0*pi + min_direction) - next_dir;
-                }else {
-                  angle_to_min_next = min_direction - next_dir;
-                }
-
-                if(angle_to_min_next < 0.0) {
-                  angle_to_min_next = 2.0 * pi + angle_to_min_next;
-                }
-
-                if(current_dir > 0.0 && max_direction < 0.0) {
-                  angle_to_max_current = (2.0*pi + max_direction) - current_dir;
-                }else {
-                  angle_to_max_current = max_direction - current_dir;
-                }
-
-                if(angle_to_max_current < 0.0) {
-                  angle_to_max_current = 2.0 * pi + angle_to_max_current;
-                }
-
-                if(next_dir > 0.0 && max_direction < 0.0) {
-                  angle_to_max_next = (2.0*pi + max_direction) - next_dir;
-                }else {
-                  angle_to_max_next = max_direction - next_dir;
-                }
-
-                if(angle_to_max_next < 0.0) {
-                  angle_to_max_next = 2.0 * pi + angle_to_max_next;
-                }
-
-                if (angle_to_min_current < pi / 6.0 && angle_to_min_next > pi / 6.0) { // this means the min vector should be between
-                  current_dir = min_direction;
-                  angle_to_min_current = 0;
-                }
-
-                if (angle_to_max_current < pi / 6.0 && angle_to_max_next > pi / 6.0) { // this means the max vector should be between
-                  next_dir = max_direction;
-                  angle_to_max_current = 0;
-                }
-*/
                 if(distribute) { // distribute water
 
                   // this is a cos^2 function, integrated, and scaled to have the sum under the curve be 1
                   water_store_multiplier[dir_counter] = 2.0/pi * ( ((next_dir - direction) / 2.0 + sin(2.0*(next_dir-direction)) / 4.0) - 
                                                                   ((current_dir - direction) / 2.0 + sin(2.0*(current_dir-direction)) / 4.0));
 
-if (check_two) {
-  m_log->message(2,
-             "* %i %f %f %f %f %f %f %i \n", dir_counter, water_store_multiplier[dir_counter], current_dir, next_dir, min_direction, direction, max_direction_2, check_two);
-
-} else {
-  m_log->message(2,
-             "* %i %f %f %f %f %f %f %i\n", dir_counter, water_store_multiplier[dir_counter], current_dir, next_dir, min_direction, direction, max_direction, check_two);
-}
 
                   total = total + water_store_multiplier[dir_counter];
 
                 } else {
 
-                  water_store_multiplier[dir_counter] = 0;
+                  water_store_multiplier[dir_counter] = 0.0;
 
                 }
 
@@ -1266,79 +1215,6 @@ if (check_two) {
               total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
                                                             + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
 
-
-  //            int neighbor_index =  index + (i_m - 1) + (j_m - 1) * num_i;
-
-
-  m_log->message(2,
-             "* %i %f %f \n", index, gradient_storage[lowest_processor][lowest_index], total);
-
-
-
-
-
-
-/*
-              // create gradient and length matrix
-
-              double gradient_matrix[3][3], length_matrix[3][3];
-
-              for(int i_m = 0; i_m < 3; i_m++) {
-                for(int j_m = 0; j_m < 3; j_m++) {
-
-                  int neighbor_index =  index + (i_m - 1) + (j_m - 1) * num_i;
-
-                  gradient_matrix[i_m][j_m] = hydro_gradient_vec[neighbor_index];
-
-                  if( abs(i_m - 1) == abs(j_m - 1)) {
-                    length_matrix[i_m][j_m] = 0.354;
-                  } else {
-                    length_matrix[i_m][j_m] = 0.5;
-                  }
-
-                }
-              }
-
-              double middle_gradient = gradient_matrix[1][1];
-              gradient_matrix[1][1] = 0.0; // prevening potential problems
-
-              double gradient_length_sum = 0.0;
-
-              // if the gradient in a neighboring cell less than the current cell, it is not included in the distribution
-              for(int i_m = 0; i_m < 3; i_m++) {
-                for(int j_m = 0; j_m < 3; j_m++) {
-
-                  if (gradient_matrix[i_m][j_m] > middle_gradient) { // added
-
-                    gradient_length_sum = gradient_length_sum + gradient_matrix[i_m][j_m] * length_matrix[i_m][j_m];
-
-                  }
-                }
-              }
-
-              if (gradient_length_sum > 0) { //nothing happens if the other cells have lower gradient
-
-                double common_term = total_input_ghosts_temp_vec[index] / gradient_length_sum;
-
-
-                // each cell with a higher gradient receives water
-
-                for(int i_m = 0; i_m < 3; i_m++) {
-                  for(int j_m = 0; j_m < 3; j_m++) {
-
-                    if (gradient_matrix[i_m][j_m] > middle_gradient) { // added
-
-                      int neighbor_index =  index + (i_m - 1) + (j_m - 1) * num_i;
-
-                      total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]  + common_term * middle_gradient;
-
-                    }
-
-                  }
-                }
-
-              }
-*/
             }
 
             processor_point_counter[lowest_processor]++;
@@ -1363,6 +1239,8 @@ if (check_two) {
 
   }
 
+
+  m_total_input_ghosts.copy_from(m_total_input_ghosts_temp);
 
   // The remaining water input rate is supplemented by adding the nearest upstream cell's water. Ideally you would
   // want to include the entire pathway up to the ice sheet dome, but that would require a lot of additional calculations

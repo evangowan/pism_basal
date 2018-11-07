@@ -1207,9 +1207,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                 if(distribute) { // distribute water
 
                   // this is a cos^2 function, integrated, and scaled to have the sum under the curve be 1
-                  water_store_multiplier[dir_counter] = 2.0/pi * ( ((next_dir + direction) / 2.0 + sin(2.0*(next_dir+direction)) / 4.0) - 
-                                                                  ((current_dir + direction) / 2.0 + sin(2.0*(current_dir+direction)) / 4.0));
-/*
+                  water_store_multiplier[dir_counter] = 2.0/pi * ( ((next_dir - direction) / 2.0 + sin(2.0*(next_dir-direction)) / 4.0) - 
+                                                                  ((current_dir - direction) / 2.0 + sin(2.0*(current_dir-direction)) / 4.0));
+
 if (check_two) {
   m_log->message(2,
              "* %i %f %f %f %f %f %f %i \n", dir_counter, water_store_multiplier[dir_counter], current_dir, next_dir, min_direction, direction, max_direction_2, check_two);
@@ -1218,7 +1218,7 @@ if (check_two) {
   m_log->message(2,
              "* %i %f %f %f %f %f %f %i\n", dir_counter, water_store_multiplier[dir_counter], current_dir, next_dir, min_direction, direction, max_direction, check_two);
 }
-*/
+
                   total = total + water_store_multiplier[dir_counter];
 
                 } else {
@@ -1269,10 +1269,10 @@ if (check_two) {
 
   //            int neighbor_index =  index + (i_m - 1) + (j_m - 1) * num_i;
 
-/*
+
   m_log->message(2,
              "* %i %f %f \n", index, gradient_storage[lowest_processor][lowest_index], total);
-*/
+
 
 
 

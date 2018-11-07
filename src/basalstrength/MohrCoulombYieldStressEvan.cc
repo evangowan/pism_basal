@@ -198,6 +198,11 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
        m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * m_till_cover_local(i, j) + high_tauc * (1.0 - m_till_cover_local(i, j));
 
+
+      // cheat
+
+      m_basal_yield_stress(i, j) = high_tauc;
+
        // find ratio of effective pressure due to hydrology and overburden, limited by the user defined maximum ratio
 //  m_log->message(2,
 //             "* m_Po %i %i %f ...\n", i, j, m_Po(i, j));
@@ -215,7 +220,15 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
        // reduce the effective basal yield stress by this ratio
 
+       double k1 = 6.3e-8;
+       double k2 = 400.0;
+
+       double test_var = k1 * m_basal_yield_stress(i, j) / ( (1.0 - pressure_ratio) * m_Po(i, j) );
+
        m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * (1.0 - pressure_ratio);
+
+//  m_log->message(2,
+//             "* %i %i %f %f %f ...\n", i, j, m_basal_yield_stress(i, j),test_var, pressure_ratio);
 
     }
 //  m_log->message(2,

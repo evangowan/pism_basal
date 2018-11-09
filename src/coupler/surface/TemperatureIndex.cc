@@ -518,6 +518,10 @@ void TemperatureIndex::update_impl(double t, double dt) {
             m_accumulation(i, j) += accumulation * ice_density;
             m_melt(i, j)         += changes.melt * ice_density;
             m_runoff(i, j)       += changes.runoff * ice_density;
+
+  m_log->message(2,
+             "%i %i %i %f ...\n",k, i, j, m_runoff(i, j));
+
           }
 
           // m_climatic_mass_balance (unlike m_accumulation, m_melt, and m_runoff), is a rate.

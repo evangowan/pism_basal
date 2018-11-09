@@ -372,7 +372,6 @@ void hydrologyEvan::update_velbase_mag(IceModelVec2S &result) {
 void hydrologyEvan::update_surface_runoff(IceModelVec2S &result) {
 
   surface::TemperatureIndex *temp_index = dynamic_cast<surface::TemperatureIndex*>(m_surfaceT);
- //   hydrology::Routing *hydrology_routing = dynamic_cast<hydrology::Routing*>(m_hydrology);
 
   temp_index -> get_runoff_rate(m_melt_rate_local);
 }
@@ -755,11 +754,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       }
 
 
- 
-
-
-
-
     }
   }
 
@@ -851,26 +845,28 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
 
 // Note: temporary cheat, uncomment this line when not cheating
-//  m_total_input_ghosts_temp.copy_from(m_total_input_ghosts);
+  m_total_input_ghosts_temp.copy_from(m_total_input_ghosts);
 
 //  m_total_input_ghosts_temp.set(0.1);
 
 
   int num_i = m_grid->Mx();
   int num_j = m_grid->My();
+
+/*
   double seconds_in_year = 365.0*24.0*3600.0;
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
      if(i < num_i/2 && j < num_j / 2) {
-       m_total_input_ghosts_temp(i,j) = 1.0 / seconds_in_year;
+       m_total_input_ghosts_temp(i,j) = 5.0 / seconds_in_year;
      } else {
        m_total_input_ghosts_temp(i,j) = 0.0;
      }
 
   }
  
-
+*/
   m_log->message(2,
              "* starting serial process ...\n");
   {
@@ -1224,6 +1220,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   // need to grab the overburden pressure for the calculation of the hydrology scheme
   overburden_pressure(m_pressure_temp);
 
+  m_hydrology_fraction_overburden.set(1.0);
+
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
@@ -1260,15 +1258,15 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       effective_pressure_tunnel = pow( (rho_w * g * m_surface_gradient(i,j) * m_volume_water_flux(i,j)) / 
                                          (rho_i * arrhenius_parameter * latent_heat * m_tunnel_cross_section(i,j)), (1.0 / Glen_exponent));
     } else {
-      effective_pressure_tunnel = 0.0;
+      effective_pressure_tunnel = m_pressure_temp(i,j);
     }
 
-
+/*
     // Fowler suggested that the effective pressure become atmospheric, but I am setting it to be some fraction of the overburden
     if(effective_pressure_tunnel / m_pressure_temp(i,j) > max_effective_pressure_ratio ) {
       effective_pressure_tunnel = max_effective_pressure_ratio * m_pressure_temp(i,j);
     }
-
+*/
 
     // Cavity effective pressure
     // Equation A.11 from Arnold and Sharp (2002) (note that the equation is wrong in the paper, see equation 4.16 in Fowler (1987))
@@ -1281,7 +1279,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_surface_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) * 
                                                               ( m_volume_water_flux(i,j) / (number_of_cavities * cavity_area) ) ), (1.0 / Glen_exponent));
     } else {
-      effective_pressure_cavity = 0.0;
+      effective_pressure_cavity = m_pressure_temp(i,j);
     }
 
 
@@ -1297,7 +1295,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     if(m_total_input_ghosts(i,j) < 1e-12) { // essentially no water available
 
-      m_hydrology_effective_pressure(i,j) = 0.0;
+      m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
 
       m_hydrosystem(i,j) = 0.;
 
@@ -1313,8 +1311,13 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     }
 
-    m_hydrology_fraction_overburden(i,j) = m_hydrology_effective_pressure(i,j) / m_pressure_temp(i,j);
+    if (m_hydrology_effective_pressure(i,j) > m_pressure_temp(i,j)) {
+      m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
+    }
 
+    if(m_pressure_temp(i,j) > 0.0) {
+      m_hydrology_fraction_overburden(i,j) = m_hydrology_effective_pressure(i,j) / m_pressure_temp(i,j);
+    }
 
 
   }

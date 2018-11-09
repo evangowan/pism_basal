@@ -48,8 +48,10 @@ Context::Ptr pisms_context(MPI_Comm com) {
   Config::Ptr config = config_from_options(com, *logger, sys);
 
   config->set_string("time.calendar", "none");
-  config->set_double("grid.Lx", 750e3);
-  config->set_double("grid.Ly", 750e3);
+//  config->set_double("grid.Lx", 750e3);
+//  config->set_double("grid.Ly", 750e3);
+  config->set_double("grid.Lx", 1000e3);
+  config->set_double("grid.Ly", 1000e3);
   config->set_string("grid.periodicity", "none");
   config->set_string("grid.registration", "corner");
   config->set_string("stress_balance.sia.flow_law", "pb");

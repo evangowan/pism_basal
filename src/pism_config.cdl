@@ -107,7 +107,7 @@ netcdf pism_config {
     pism_config:basal_yield_stress.constant.value_type = "scalar";
     pism_config:basal_yield_stress.constant.value_units = "Pascal";
 
-    pism_config:basal_yield_stress.ice_free_bedrock = 1e6;
+    pism_config:basal_yield_stress.ice_free_bedrock = 1.8e9;
     pism_config:basal_yield_stress.ice_free_bedrock_doc = "the 'high' yield stress value used in grounded ice-free areas.";
     pism_config:basal_yield_stress.ice_free_bedrock_option = "high_tauc";
     pism_config:basal_yield_stress.ice_free_bedrock_type = "scalar";

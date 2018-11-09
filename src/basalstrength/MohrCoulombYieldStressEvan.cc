@@ -75,6 +75,11 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
                        "fraction of overburden pressure of subglacial hydrology system",
                        "1", "");
 
+  m_sliding_mechanism.create(m_grid, "sliding_mechanism", WITHOUT_GHOSTS);
+  m_sliding_mechanism.set_attrs("internal",
+                       "0 for no sliding (i.e. ice free), 1 for sediment deformation, 2 for hydrological influence flow",
+                       "1", "");
+
   m_till_cover_local.create(m_grid, "tillcover_local",
               WITHOUT_GHOSTS);
   m_till_cover_local.set_attrs("internal",
@@ -108,11 +113,13 @@ void MohrCoulombYieldStressEvan::define_model_state_impl(const PIO &output) cons
   MohrCoulombYieldStress::define_model_state_impl(output);
 
   m_basal_yield_stress.define(output);
+  m_sliding_mechanism.define(output);
 }
 
 void MohrCoulombYieldStressEvan::write_model_state_impl(const PIO &output) const {
   MohrCoulombYieldStress::write_model_state_impl(output);
   m_basal_yield_stress.write(output);
+  m_sliding_mechanism.write(output);
 
 }
 
@@ -143,7 +150,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                               m_config->get_double("basal_yield_stress.mohr_coulomb.till_compressibility_coefficient")),
                delta       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_effective_fraction_overburden"),
                tlftw       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_log_factor_transportable_water"),
-               max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio");
+               max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio"),
+               rho_i = m_config->get_double("constants.ice.density"),
+               g = m_config->get_double("constants.standard_gravity");
 
   if (hydroEvan) {
     hydroEvan->till_water_thickness(m_tillwat);
@@ -157,7 +166,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
   const IceModelVec2S        &bed_topography = inputs.geometry->bed_elevation;
 
   IceModelVec::AccessList list{&m_tillwat, &m_till_phi, &m_basal_yield_stress, &mask,
-      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure};
+      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism};
 
 
 //  m_log->message(2,
@@ -172,8 +181,10 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
     if (mask.ocean(i, j)) {
       m_basal_yield_stress(i, j) = 0.0;
+      m_sliding_mechanism(i,j) = 0;
     } else if (mask.ice_free(i, j)) {
       m_basal_yield_stress(i, j) = high_tauc;  // large yield stress if grounded and ice-free
+      m_sliding_mechanism(i,j) = 0;
     } else { // grounded and there is some ice
       // user can ask that marine grounding lines get special treatment
       const double sea_level = 0.0; // FIXME: get sea-level from correct PISM source
@@ -191,30 +202,53 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
         m_basal_yield_stress(i, j) = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
 
 
-//  m_log->message(2,
+//  m_log->message(2, 
 //             "* %i %i %f ...\n", i, j, m_basal_yield_stress(i, j));
 
        // take into account sediment free areas
 
        m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * m_till_cover_local(i, j) + high_tauc * (1.0 - m_till_cover_local(i, j));
 
+       m_sliding_mechanism(i,j) = 1;
 
-      // cheat
+       if (hydroEvan) {
 
-      m_basal_yield_stress(i, j) = high_tauc;
+         // sliding multipliers used by Arnold and Sharp (2002)
+         double K1 = 6.3376e-6;
+         double K2 = 400.0;
 
-       // find ratio of effective pressure due to hydrology and overburden, limited by the user defined maximum ratio
+
+         // based on equation A.4 in Arnold and Sharp (2002)
+         // Note, the equation in Arnold and Sharp is messed up, I ended up converting it to the orignal form used in the paper by McInnes and Budd (1984), which
+         // used value of "ice thickness above buoyancy". The values of K1 and K2 were designed for this, and the Arnold and Sharp equation used a value of K2 which
+         // was not converted to the correct units.
+
+         double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
+
+         double yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1;
+
 //  m_log->message(2,
-//             "* m_Po %i %i %f ...\n", i, j, m_Po(i, j));
+//             "* %i %i %f %f %i\n", i, j, m_basal_yield_stress(i, j), yield_stress_hydrology, yield_stress_hydrology < m_basal_yield_stress(i, j));
 
-//  m_log->message(2,
-//             "* m_effective_pressure %i %i %f ...\n", i, j, m_effective_pressure(i, j));
-       double pressure_ratio;
-       if (m_Po(i, j) > 0.0) {
-         pressure_ratio = m_effective_pressure(i, j) / m_Po(i, j);
-       } else {
-          pressure_ratio = 0.0;
+         // if the ice base is weaker than the sediments
+         if (yield_stress_hydrology < m_basal_yield_stress(i, j)) {
+           m_basal_yield_stress(i, j) = yield_stress_hydrology;
+           m_sliding_mechanism(i,j) = 2;
+         }
+
+
+
        }
+
+/*
+       // find ratio of effective pressure due to hydrology and overburden, limited by the user defined maximum ratio
+
+         double pressure_ratio;
+         if (m_Po(i, j) > 0.0) {
+           pressure_ratio = m_effective_pressure(i, j) / m_Po(i, j);
+         } else {
+           pressure_ratio = 0.0;
+         }
 
        pressure_ratio = std::min(pressure_ratio,max_effective_pressure_ratio);
 
@@ -229,6 +263,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
 //  m_log->message(2,
 //             "* %i %i %f %f %f ...\n", i, j, m_basal_yield_stress(i, j),test_var, pressure_ratio);
+
+*/
 
     }
 //  m_log->message(2,

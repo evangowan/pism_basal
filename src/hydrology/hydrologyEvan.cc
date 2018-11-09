@@ -923,7 +923,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // temporary arrays to store information on each subdomain
 
-        int processor_point_counter[number_of_processors] = {0}; // initialize to zero
+        int processor_point_counter[number_of_processors]; // initialize to zero
         int processor_width_mask_u[number_of_processors];
         int processor_width_mask_v[number_of_processors];
         int processor_offset_mask_u[number_of_processors];
@@ -932,6 +932,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         int max_points = 0;
 
         int processor, vector_index;
+
+        for (int proc_counter = 0; proc_counter < number_of_processors; proc_counter++) {
+          processor_point_counter[proc_counter] = 0;
+
+        }
 
         // Fill up those arrays
 

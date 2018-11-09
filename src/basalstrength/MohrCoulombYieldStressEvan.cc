@@ -66,8 +66,8 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
   : MohrCoulombYieldStress(g, hydro), m_hydrology(hydro) {
 
 
-  m_log->message(2,
-             "* Starting MohrCoulombYieldStressEvan ...\n");
+//  m_log->message(2,
+//             "* Starting MohrCoulombYieldStressEvan ...\n");
 
 
   m_effective_pressure.create(m_grid, "effective_pressure", WITHOUT_GHOSTS);
@@ -100,8 +100,8 @@ MohrCoulombYieldStressEvan::~MohrCoulombYieldStressEvan() {
 */
 void MohrCoulombYieldStressEvan::init_impl() {
 
-  m_log->message(2,
-             "* Starting MohrCoulombYieldStressEvan::init_impl ...\n");
+//  m_log->message(2,
+//             "* Starting MohrCoulombYieldStressEvan::init_impl ...\n");
 
   MohrCoulombYieldStress::init_impl();
 

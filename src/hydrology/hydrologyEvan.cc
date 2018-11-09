@@ -47,8 +47,8 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 	: NullTransport(g)
    {
 
-  m_log->message(2,
-             "* Starting hydrologyEvan ...\n");
+//  m_log->message(2,
+//             "* Starting hydrologyEvan ...\n");
 
 
   m_stressbalance = sb;
@@ -250,8 +250,8 @@ hydrologyEvan::~hydrologyEvan() {
 
 
 void hydrologyEvan::init() {
-  m_log->message(2,
-             "* Initializing Evan's null-transport subglacial hydrology model ...\n");
+//  m_log->message(2,
+ //            "* Initializing Evan's null-transport subglacial hydrology model ...\n");
   Hydrology::init();
 
   options::Real
@@ -285,8 +285,8 @@ void hydrologyEvan::init() {
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-    m_log->message(2,
-             "%i %i %i\n", i, j, counter);
+//    m_log->message(2,
+//             "%i %i %i\n", i, j, counter);
 
     m_gradient_permutation(i, j) = counter;
     m_processor_mask(i,j) = m_grid -> rank();
@@ -298,8 +298,8 @@ void hydrologyEvan::init() {
 
   }
 
-  m_log->message(2,
-             "* Finished initializing the permutation array ...\n");
+//  m_log->message(2,
+ //            "* Finished initializing the permutation array ...\n");
 
 }
 
@@ -633,8 +633,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-  m_log->message(2,
-             "* Starting hydrologyEvan::update_impl ...\n");
+//  m_log->message(2,
+//             "* Starting hydrologyEvan::update_impl ...\n");
 
   // if asked for the identical time interval as last time, then do nothing
 //  if ((fabs(icet - m_t) < 1e-6) && (fabs(icedt - m_dt) < 1e-6)) {
@@ -664,8 +664,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-  m_log->message(2,
-             "* time: %f\n", m_t);
+//  m_log->message(2,
+ //            "* time: %f\n", m_t);
 
   const double
     dx = m_grid->dx(),
@@ -867,8 +867,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   }
  
 */
-  m_log->message(2,
-             "* starting serial process ...\n");
+//  m_log->message(2,
+//             "* starting serial process ...\n");
   {
     m_processor_mask.put_on_proc0(*m_processor_mask_p0);
     m_offset_mask_u.put_on_proc0(*m_offset_mask_u_p0);
@@ -884,8 +884,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
-  m_log->message(2,
-             "* in serial process ...\n");
+//  m_log->message(2,
+//             "* in serial process ...\n");
 
 
 
@@ -914,8 +914,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         double pi = 3.14159265358979;
 
-  m_log->message(2,
-             "* switched up memory ...\n");
+//  m_log->message(2,
+//             "* switched up memory ...\n");
 
         int total_nodes = m_grid->xm() * m_grid->ym();
 
@@ -936,8 +936,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Fill up those arrays
 
 
-  m_log->message(2,
-             "* assigning first arrays ...\n");
+//  m_log->message(2,
+//             "* assigning first arrays ...\n");
 
 
 
@@ -962,8 +962,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           }
         }
 
-  m_log->message(2,
-             "* assigned first arrays ...\n");
+//  m_log->message(2,
+ //            "* assigned first arrays ...\n");
 
         // read in the permutation and separate per processor
         double serial_permutation[number_of_processors][max_points];
@@ -978,8 +978,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         int i_temp, j_temp, permutation_index;
 
-  m_log->message(2,
-             "* assigning second arrays ...\n");
+//  m_log->message(2,
+//            "* assigning second arrays ...\n");
 
         for (int j = 0; j < num_j; j++) {
           for (int i = 0; i < num_i; i++) {
@@ -1014,8 +1014,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
      // distribute the water
-  m_log->message(2,
-             "* distributing water ...\n");
+//  m_log->message(2,
+//             "* distributing water ...\n");
 
         bool finished = false;
 

@@ -690,9 +690,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
   const IceModelVec2CellType &mask  = *m_grid->variables().get_2d_cell_type("mask");
+  const IceModelVec2S        &temp_thk = *m_grid->variables().get_2d_scalar("thk");
 
-
-  IceModelVec::AccessList list{&mask, &m_velbase_mag};
+  IceModelVec::AccessList list{&mask, &m_velbase_mag, &temp_thk};
   list.add(m_Wtil);
   list.add(m_total_input_ghosts);
   list.add(m_total_input_ghosts_temp);
@@ -1232,7 +1232,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //             "* finished updating velocity ...\n");
 
   // need to grab the overburden pressure for the calculation of the hydrology scheme
-  overburden_pressure(m_pressure_temp);
+//  overburden_pressure(m_pressure_temp);
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+    m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
+  }
 
   m_hydrology_fraction_overburden.set(1.0);
 

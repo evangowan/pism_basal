@@ -1341,6 +1341,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       m_hydrology_fraction_overburden(i,j) = m_hydrology_effective_pressure(i,j) / m_pressure_temp(i,j);
     }
 
+    if(mask.grounded_ice(i,j) && m_hydrology_effective_pressure(i,j) < 0.01 * m_pressure_temp(i,j)) {
+     m_hydrology_effective_pressure(i,j) = 0.01 * m_pressure_temp(i,j);
+    }
 
   }
 

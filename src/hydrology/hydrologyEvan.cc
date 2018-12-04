@@ -1237,6 +1237,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     const int i = p.i(), j = p.j();
 
     m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
+
+  m_log->message(2,
+             "* pressure, thk %f %f\n", m_pressure_temp(i,j), temp_thk(i,j));
   }
 
   m_hydrology_fraction_overburden.set(1.0);

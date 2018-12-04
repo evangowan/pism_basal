@@ -320,6 +320,7 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
   m_processor_mask.define(output);
+  m_pressure_temp.define(output);
 
 }
 
@@ -339,6 +340,7 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
   m_processor_mask.write(output);
+  m_pressure_temp.write(output);
 }
 
 
@@ -753,12 +755,19 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
       }
 
+	// cheat
+//	if(i >= 40 && j >=40) {
+//		m_total_input_ghosts(i,j) = 3.168808781402895E-07;
+//	}
+//
 
     }
   }
 
 
   // cheat
+
+//	m_total_input_ghosts.set(3.168808781402895E-07);
 
 //  if (m_t < 5000.) {
  //   m_total_input_ghosts.set(0.0);

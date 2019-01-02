@@ -154,13 +154,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity");
 
-  if (hydroEvan) {
-    hydroEvan->till_water_thickness(m_tillwat);
-    hydroEvan->overburden_pressure(m_Po);
-    hydroEvan->get_EffectivePressure(m_effective_pressure);
-    hydroEvan->get_SedimentDistribution(m_till_cover_local);
 
-  }
 
   const IceModelVec2CellType &mask           = inputs.geometry->cell_type;
   const IceModelVec2S        &bed_topography = inputs.geometry->bed_elevation;
@@ -168,6 +162,13 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
   IceModelVec::AccessList list{&m_tillwat, &m_till_phi, &m_basal_yield_stress, &mask,
       &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism};
 
+  if (hydroEvan) {
+    hydroEvan->till_water_thickness(m_tillwat);
+    hydroEvan->overburden_pressure(m_Po);
+    hydroEvan->get_EffectivePressure(m_effective_pressure);
+    hydroEvan->get_SedimentDistribution(m_till_cover_local);
+
+  }
 
 //  m_log->message(2,
 //             "* calculating ...\n");
@@ -181,12 +182,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
     if (mask.ocean(i, j)) {
 
-      double
-        s    = 1.0,
-        Ntil = N0 * pow(delta * m_Po(i,j) / N0, s) * pow(10.0, e0overCc * (1.0 - s));
-        Ntil = std::min(m_Po(i,j), Ntil);
-
-        m_basal_yield_stress(i, j) = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
+      m_basal_yield_stress(i, j) = 0.0;
 
         m_sliding_mechanism(i,j) = 0;
     } else if (mask.ice_free(i, j)) {

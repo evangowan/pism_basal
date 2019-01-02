@@ -258,6 +258,10 @@ void hydrologyEvan::init() {
     till_cover("-till_fraction_coverage", "fill value for fraction of surface covered by sediments",
                 m_config->get_double("hydrology.till_fraction_coverage"));
 
+  const IceModelVec2S        &temp_thk = *m_grid->variables().get_2d_scalar("thk");
+  double rho_i       = m_config->get_double("constants.ice.density");
+  double rho_w       = m_config->get_double("constants.fresh_water.density");
+  double g           = m_config->get_double("constants.standard_gravity");
 
   m_till_cover.set(till_cover);
   m_volume_water_flux.set(0.0);
@@ -276,6 +280,11 @@ void hydrologyEvan::init() {
   list.add(m_offset_mask_v);
   list.add(m_width_mask_u);
   list.add(m_width_mask_v);
+  list.add(m_hydrology_effective_pressure);
+  list.add(temp_thk);
+
+
+
 
   int i_offset = m_grid->xs();
   int j_offset = m_grid->ys();
@@ -284,6 +293,8 @@ void hydrologyEvan::init() {
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
+
+    m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
 
 //    m_log->message(2,
 //             "%i %i %i\n", i, j, counter);
@@ -295,6 +306,8 @@ void hydrologyEvan::init() {
     m_width_mask_u(i,j) = sub_width_i;
     m_width_mask_v(i,j) = sub_width_j;
     counter++;
+
+
 
   }
 
@@ -1238,8 +1251,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
 
-  m_log->message(2,
-             "* pressure, thk %f %f\n", m_pressure_temp(i,j), temp_thk(i,j));
+//  m_log->message(2,
+//             "* pressure, thk %f %f\n", m_pressure_temp(i,j), temp_thk(i,j));
   }
 
   m_hydrology_fraction_overburden.set(1.0);

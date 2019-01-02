@@ -250,8 +250,8 @@ hydrologyEvan::~hydrologyEvan() {
 
 
 void hydrologyEvan::init() {
-//  m_log->message(2,
- //            "* Initializing Evan's null-transport subglacial hydrology model ...\n");
+  m_log->message(2,
+             "* Initializing Evan's null-transport subglacial hydrology model ...\n");
   Hydrology::init();
 
   options::Real
@@ -291,10 +291,11 @@ void hydrologyEvan::init() {
   int sub_width_i = m_grid->xm();
   int sub_width_j = m_grid->ym();
 
+
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
-    m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
+    m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g; 
 
 //    m_log->message(2,
 //             "%i %i %i\n", i, j, counter);
@@ -312,7 +313,9 @@ void hydrologyEvan::init() {
   }
 
 //  m_log->message(2,
- //            "* Finished initializing the permutation array ...\n");
+ //            "* Initializing Evan's null-transport subglacial hydrology model ...\n");
+
+
 
 }
 

@@ -47,8 +47,8 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 	: NullTransport(g)
    {
 
-//  m_log->message(2,
-//             "* Starting hydrologyEvan ...\n");
+  m_log->message(2,
+             "* Starting hydrologyEvan ...\n");
 
 
   m_stressbalance = sb;

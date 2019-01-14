@@ -399,9 +399,8 @@ void hydrologyEvan::update_velbase_mag(IceModelVec2S &result) {
 
 void hydrologyEvan::update_surface_runoff(IceModelVec2S &result) {
 
-  surface::TemperatureIndex *temp_index = dynamic_cast<surface::TemperatureIndex*>(m_surfaceT);
+  m_surfaceT->runoff_rate(result);
 
-  temp_index -> get_runoff_rate(m_melt_rate_local);
 }
 
 

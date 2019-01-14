@@ -49,8 +49,6 @@ public:
   const IceModelVec2S& melt() const;
   const IceModelVec2S& runoff() const;
 
-  void get_runoff_rate(IceModelVec2S &result); // added by Evan
-
 protected:
   virtual void init_impl();
   virtual void update_impl(double my_t, double my_dt);
@@ -63,6 +61,7 @@ protected:
   virtual void mass_flux_impl(IceModelVec2S &result) const;
   virtual void temperature_impl(IceModelVec2S &result) const;
   virtual MaxTimestep max_timestep_impl(double t) const;
+  virtual void runoff_rate_impl(IceModelVec2S &result) const; // added by Evan
 
   double compute_next_balance_year_start(double time);
 protected:

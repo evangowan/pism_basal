@@ -96,6 +96,10 @@ void SurfaceModel::mass_flux(IceModelVec2S &result) const {
   this->mass_flux_impl(result);
 }
 
+void SurfaceModel::runoff_rate(IceModelVec2S &result) const {
+  this->runoff_rate_impl(result);
+}
+
 std::map<std::string, Diagnostic::Ptr> SurfaceModel::diagnostics_impl() const {
   std::map<std::string, Diagnostic::Ptr> result = {
     {"climatic_mass_balance",             Diagnostic::Ptr(new PS_climatic_mass_balance(this))},
@@ -151,6 +155,10 @@ void SurfaceModel::layer_mass(IceModelVec2S &result) const {
 }
 
 void SurfaceModel::layer_mass_impl(IceModelVec2S &result) const {
+  result.set(0.0);
+}
+
+void SurfaceModel::runoff_rate_impl(IceModelVec2S &result) const {
   result.set(0.0);
 }
 

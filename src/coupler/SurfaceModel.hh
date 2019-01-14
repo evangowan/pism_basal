@@ -58,6 +58,9 @@ public:
 
   void layer_mass(IceModelVec2S &result) const;
   void layer_thickness(IceModelVec2S &result) const;
+
+  void runoff_rate(IceModelVec2S &result) const; // added by Evan
+
 protected:
   virtual void init_impl();
 
@@ -75,6 +78,8 @@ protected:
   virtual void liquid_water_fraction_impl(IceModelVec2S &result) const;
 
   virtual void mass_flux_impl(IceModelVec2S &result) const = 0;
+
+  virtual void runoff_rate_impl(IceModelVec2S &result) const; // added by Evan
 
   virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
   virtual std::map<std::string, TSDiagnostic::Ptr> ts_diagnostics_impl() const;

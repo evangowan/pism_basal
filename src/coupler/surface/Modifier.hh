@@ -56,6 +56,13 @@ protected:
     }
   }
 
+  virtual void runoff_rate_impl(IceModelVec2S &result) const
+  {
+    if (m_input_model != NULL) {
+      m_input_model->runoff_rate(result);
+    }
+  }
+
   virtual void temperature_impl(IceModelVec2S &result) const
   {
     if (m_input_model != NULL) {

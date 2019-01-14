@@ -347,7 +347,7 @@ double TemperatureIndex::compute_next_balance_year_start(double time) {
 }
 
 // added by Evan to grab runoff rate
-void TemperatureIndex::get_runoff_rate(IceModelVec2S &result) {
+void TemperatureIndex::runoff_rate_impl(IceModelVec2S &result) const {
 
   result.copy_from(m_runoff_rate_store);
 }

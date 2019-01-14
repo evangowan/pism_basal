@@ -565,6 +565,18 @@ void IceModel::allocate_subglacial_hydrology() {
   } else if (hydrology_model == "distributed") {
     m_subglacial_hydrology = new Distributed(m_grid, m_stress_balance.get());
   } else if (hydrology_model == "hydrologyEvan") {
+
+    if(m_surface) {
+    m_log->message(2,
+             "* surface model detected before hydrology assigned\n");
+
+
+    } else {
+    m_log->message(2,
+             "* surface model not detected before hydrology assigned\n");
+
+    }
+  
     m_subglacial_hydrology = new hydrologyEvan(m_grid, m_stress_balance.get(), m_surface); // added by Evan
   } else {
     throw RuntimeError::formatted(PISM_ERROR_LOCATION, "unknown value for configuration string 'hydrology.model':\n"

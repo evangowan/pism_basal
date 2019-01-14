@@ -53,7 +53,30 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
   m_stressbalance = sb;
 
+  if(m_stressbalance) {
+  m_log->message(2,
+             "* Stress balance model detected in the initialization\n");
+
+
+  } else {
+  m_log->message(2,
+             "* Stress balance model not detected in the initialization\n");
+  }
+
+
+
   m_surfaceT = m_surface;
+
+
+  if(m_surfaceT) {
+  m_log->message(2,
+             "* Surface model detected in the initialization\n");
+
+
+  } else {
+  m_log->message(2,
+             "* Surface model not detected in the initialization\n");
+  }
 
   unsigned int stencil_width = 1;
 

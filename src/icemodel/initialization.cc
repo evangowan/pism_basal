@@ -631,8 +631,7 @@ void IceModel::allocate_submodels() {
 
   allocate_stressbalance();
 
-// new location
-  allocate_couplers();
+
 
   // this has to happen *after* allocate_stressbalance()
   {
@@ -648,8 +647,8 @@ void IceModel::allocate_submodels() {
   allocate_bedrock_thermal_unit();
 
   allocate_bed_deformation();
-// original location
-//  allocate_couplers();
+
+  allocate_couplers();
 
 
 

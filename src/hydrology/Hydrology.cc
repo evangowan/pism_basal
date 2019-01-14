@@ -32,6 +32,8 @@ namespace hydrology {
 
 Hydrology::Hydrology(IceGrid::ConstPtr g)
   : Component_TS(g) {
+
+  m_surfaceT = NULL;
   m_inputtobed = NULL;
   m_hold_bmelt = false;
 
@@ -277,6 +279,20 @@ void Hydrology::get_input_rate(double hydro_t, double hydro_dt,
   }
 }
 
+void Hydrology::passSufaceModelIn(surface::SurfaceModel *m_surface) {
+  m_surfaceT = m_surface;
+
+
+  if(m_surfaceT) {
+  m_log->message(2,
+             "* Surface model detected in the initialization\n");
+
+
+  } else {
+  m_log->message(2,
+             "* Surface model not detected in the initialization\n");
+  }
+}
 
 } // end of namespace hydrology
 } // end of namespace pism

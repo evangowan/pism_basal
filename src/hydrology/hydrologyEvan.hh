@@ -39,9 +39,10 @@ namespace hydrology {
 // This is the same as NullTransport, except that the entire water thickness is saved instead of just the water in the till
 class hydrologyEvan : public NullTransport {
 public:
-  hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance *sb, surface::SurfaceModel *m_surface);
+  hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance *sb);
   virtual ~hydrologyEvan();
   virtual void init();
+
 
   virtual void write_model_state_impl(const PIO &output) const;
   virtual void define_model_state_impl(const PIO &output) const;
@@ -72,8 +73,6 @@ protected:
   // need to get basal sliding velocity (thus speed):
   stressbalance::StressBalance* m_stressbalance;
 
-  // need surface model to get surface melt
-  surface::SurfaceModel* m_surfaceT;
 
 private:
 

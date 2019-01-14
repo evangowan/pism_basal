@@ -43,7 +43,7 @@
 namespace pism {
 namespace hydrology {
 
-hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance *sb, surface::SurfaceModel *m_surface)
+hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance *sb)
 	: NullTransport(g)
    {
 
@@ -63,20 +63,6 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
              "* Stress balance model not detected in the initialization\n");
   }
 
-
-
-  m_surfaceT = m_surface;
-
-
-  if(m_surfaceT) {
-  m_log->message(2,
-             "* Surface model detected in the initialization\n");
-
-
-  } else {
-  m_log->message(2,
-             "* Surface model not detected in the initialization\n");
-  }
 
   unsigned int stencil_width = 1;
 
@@ -267,6 +253,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
 
 }
+
 
 hydrologyEvan::~hydrologyEvan() {
 }

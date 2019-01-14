@@ -21,6 +21,7 @@
 
 #include "pism/util/iceModelVec.hh"
 #include "pism/util/Component.hh"
+#include "pism/coupler/SurfaceModel.hh"
 
 namespace pism {
 
@@ -121,6 +122,8 @@ public:
   virtual void subglacial_water_thickness(IceModelVec2S &result) const = 0;
   virtual void subglacial_water_pressure(IceModelVec2S &result) const = 0;
 
+  void passSufaceModelIn(surface::SurfaceModel *m_surface);
+
 protected:
   virtual void update_impl(double icet, double icedt) = 0;
   virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
@@ -130,6 +133,11 @@ protected:
 
   virtual void get_input_rate(double hydro_t, double hydro_dt, IceModelVec2S &result);
   virtual void check_Wtil_bounds();
+
+  // need surface model to get surface melt
+  surface::SurfaceModel* m_surfaceT;
+
+
 protected:
   // this model's state
   IceModelVec2S m_Wtil;      // effective thickness of basal water stored in till

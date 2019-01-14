@@ -196,6 +196,11 @@ void IceModel::model_state_setup() {
   // Now surface elevation is initialized, so we can initialize surface models (some use
   // elevation-based parameterizations of surface temperature and/or mass balance).
   m_surface->init();
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  std::string hydrology_model = m_config->get_string("hydrology.model");
+  if (hydrology_model == "hydrologyEvan") {
+    m_subglacial_hydrology->passSufaceModelIn(m_surface);
+  }
 
   if (m_subglacial_hydrology) {
     m_subglacial_hydrology->init();
@@ -577,7 +582,7 @@ void IceModel::allocate_subglacial_hydrology() {
 
     }
   
-    m_subglacial_hydrology = new hydrologyEvan(m_grid, m_stress_balance.get(), m_surface); // added by Evan
+    m_subglacial_hydrology = new hydrologyEvan(m_grid, m_stress_balance.get()); // added by Evan
   } else {
     throw RuntimeError::formatted(PISM_ERROR_LOCATION, "unknown value for configuration string 'hydrology.model':\n"
                                   "has value '%s'", hydrology_model.c_str());

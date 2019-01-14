@@ -562,9 +562,13 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
 
   if(m_surfaceT) {
+  m_log->message(2,
+             "* It should be updating the surface runoff\n");
+
     update_surface_runoff(m_melt_rate_local);
   } else {
-
+  m_log->message(2,
+             "* Surface model not detected\n");
     m_melt_rate_local.set(0.0);
 
   }

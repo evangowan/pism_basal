@@ -630,7 +630,7 @@ void IceModel::allocate_submodels() {
   allocate_iceberg_remover();
 
   allocate_stressbalance();
-
+/* original position
   // this has to happen *after* allocate_stressbalance()
   {
     allocate_age_model();
@@ -641,11 +641,28 @@ void IceModel::allocate_submodels() {
   // this has to happen *after* allocate_subglacial_hydrology()
   allocate_basal_yield_stress();
 
+*/
+
   allocate_bedrock_thermal_unit();
 
   allocate_bed_deformation();
 
   allocate_couplers();
+
+// new position
+  // this has to happen *after* allocate_stressbalance()
+  {
+    allocate_age_model();
+    allocate_energy_model();
+    allocate_subglacial_hydrology();
+  }
+
+  // this has to happen *after* allocate_subglacial_hydrology()
+  allocate_basal_yield_stress();
+
+
+
+
 }
 
 

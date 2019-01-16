@@ -584,14 +584,14 @@ void TemperatureIndex::define_model_state_impl(const PIO &output) const {
   SurfaceModel::define_model_state_impl(output);
   m_firn_depth.define(output, PISM_DOUBLE);
   m_snow_depth.define(output, PISM_DOUBLE);
-  m_runoff_rate_store.define(output);
+//  m_runoff_rate_store.define(output);
 }
 
 void TemperatureIndex::write_model_state_impl(const PIO &output) const {
   SurfaceModel::write_model_state_impl(output);
   m_firn_depth.write(output);
   m_snow_depth.write(output);
-  m_runoff_rate_store.write(output);
+//  m_runoff_rate_store.write(output);
 }
 
 namespace diagnostics {

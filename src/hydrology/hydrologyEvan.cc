@@ -423,29 +423,29 @@ void hydrologyEvan::potential_gradient(IceModelVec2S &result_u, IceModelVec2S &r
 
   double u, v;
 
-
-  IceModelVec::AccessList list;
-  list.add(m_pressure_temp);
-  list.add(m_surface_gradient_temp);
-  list.add(m_bed_gradient_temp);
-  list.add(m_gradient_temp_u);
-  list.add(m_gradient_temp_v);
-
-
-  // grab the bed and surface gradients
-  surface_gradient(m_surface_gradient_temp);
-  bed_gradient(m_bed_gradient_temp);
-
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
-
-    // Equation 6.13 in Cuffy and Paterson (2010)
-    // The flotation fraction is the ratio of the pressure of water to the pressure of ice, and will influence the effect of the bed gradient on the total potential gradient
-    // At a default, it is set to 0.8, which gives means the bed slope needs to be 2.7 times greater than the surface slope to have an equal influence on the direction of water flow.
-    m_gradient_temp_u(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
-    m_gradient_temp_v(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
+  {
+    IceModelVec::AccessList list;
+    list.add(m_surface_gradient_temp);
+    list.add(m_bed_gradient_temp);
+    list.add(m_gradient_temp_u);
+    list.add(m_gradient_temp_v);
 
 
+    // grab the bed and surface gradients
+    surface_gradient(m_surface_gradient_temp);
+    bed_gradient(m_bed_gradient_temp);
+
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
+
+      // Equation 6.13 in Cuffy and Paterson (2010)
+      // The flotation fraction is the ratio of the pressure of water to the pressure of ice, and will influence the effect of the bed gradient on the total potential gradient
+      // At a default, it is set to 0.8, which gives means the bed slope needs to be 2.7 times greater than the surface slope to have an equal influence on the direction of water flow.
+      m_gradient_temp_u(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
+      m_gradient_temp_v(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
+
+
+    }
   }
 
   result_u.copy_from(m_gradient_temp_u);
@@ -470,8 +470,8 @@ void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
 
 
   IceModelVec::AccessList list;
-  list.add(surface_elevation);
   list.add(m_surface_elevation_temp);
+  list.add(result);
 
   m_surface_elevation_temp.copy_from(surface_elevation);
   m_surface_elevation_temp.update_ghosts();

@@ -1044,7 +1044,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         int max_point_count[number_of_processors];
 
         // rezero the point counter. C++ is not as nice as Fortran for this
-        for (counter = 0; counter < number_of_processors; counter ++) {
+        for (int counter = 0; counter < number_of_processors; counter ++) {
           max_point_count[counter] = processor_point_counter[counter];
           processor_point_counter[counter] = 0;
 

@@ -723,92 +723,54 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   const IceModelVec2CellType &mask  = *m_grid->variables().get_2d_cell_type("mask");
   const IceModelVec2S        &temp_thk = *m_grid->variables().get_2d_scalar("thk");
 
-  IceModelVec::AccessList list{&mask, &m_velbase_mag, &temp_thk};
-  list.add(m_Wtil);
-  list.add(m_total_input_ghosts);
-  list.add(m_total_input_ghosts_temp);
-  list.add(m_till_cover);
-  list.add(m_hydro_gradient);
-  list.add(m_hydro_gradient_dir_u);
-  list.add(m_hydro_gradient_dir_v);
-  list.add(m_surface_gradient);
-  list.add(m_surface_gradient_dir);
-  list.add(m_tunnel_cross_section);
-  list.add(m_hydrology_effective_pressure);
-  list.add(m_volume_water_flux);
-  list.add(m_pressure_temp);
-  list.add(m_hydrosystem);
-  list.add(m_hydrology_fraction_overburden);
-  list.add(m_gradient_permutation);
-  list.add(m_processor_mask);
-  list.add(m_offset_mask_u);
-  list.add(m_offset_mask_v);
-  list.add(m_width_mask_u);
-  list.add(m_width_mask_v);
-
-
-
-
 
   // first we need to find out if the water input is sufficient to fill up the till in the cell
-
-  m_log->message(2,
-             "* Filling till ...\n");
-
-
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+  {
+    m_log->message(2,
+               "* Filling till ...\n");
 
 
-    if ( mask.ice_free(i,j) && ! mask.ocean(i,j)) {
-      m_Wtil(i,j) = 0.0;
+    IceModelVec::AccessList list{&m_Wtil, &mask, &m_till_cover, &m_total_input_ghosts};
 
-    } else if (mask.ocean(i,j)) {
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
-	m_Wtil(i,j) = tillwat_max; // have to assume that sediments under water are saturated. important for when the ice advances, so it doesn't have to fill up.
 
-    } else {
+      if ( mask.ice_free(i,j) && ! mask.ocean(i,j)) {
+        m_Wtil(i,j) = 0.0;
 
-      // calculate the amount of water in the till
-      double Wtill_before = m_Wtil(i,j);
-      double Wtill_after;
-      double before_wat=m_total_input_ghosts(i,j);
-      if (m_till_cover(i,j) < 0.01) { // no till
-        Wtill_after = Wtill_before;
+      } else if (mask.ocean(i,j)) {
+
+	      m_Wtil(i,j) = tillwat_max; // have to assume that sediments under water are saturated. important for when the ice advances, so it doesn't have to fill up.
+
       } else {
-        Wtill_after = m_Wtil(i,j) + icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j);
+
+        // calculate the amount of water in the till
+        double Wtill_before = m_Wtil(i,j);
+        double Wtill_after;
+        double before_wat=m_total_input_ghosts(i,j);
+        if (m_till_cover(i,j) < 0.01) { // no till
+          Wtill_after = Wtill_before;
+        } else {
+          Wtill_after = m_Wtil(i,j) + icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j);
+        }
+
+        m_Wtil(i,j) = std::min(std::max(0.0, Wtill_after), tillwat_max);
+
+        if(m_Wtil(i,j) < tillwat_max && m_till_cover(i,j) > 0.01) { // all of the water is taken up by the sediments
+           m_total_input_ghosts(i,j) = 0.0;
+        } else { // determine how much water was taken up by the sediments and subtract it from the total water
+
+          double water_in_till = ((Wtill_before - Wtill_after)  / icedt + tillwat_decay_rate) * m_till_cover(i,j);
+          m_total_input_ghosts(i,j) -= water_in_till;
+
+        }
+
+
       }
-
-      m_Wtil(i,j) = std::min(std::max(0.0, Wtill_after), tillwat_max);
-
-      if(m_Wtil(i,j) < tillwat_max && m_till_cover(i,j) > 0.01) { // all of the water is taken up by the sediments
-         m_total_input_ghosts(i,j) = 0.0;
-      } else { // determine how much water was taken up by the sediments and subtract it from the total water
-
-        double water_in_till = ((Wtill_before - Wtill_after)  / icedt + tillwat_decay_rate) * m_till_cover(i,j);
-        m_total_input_ghosts(i,j) -= water_in_till;
-
-      }
-
-	// cheat
-//	if(i >= 40 && j >=40) {
-//		m_total_input_ghosts(i,j) = 3.168808781402895E-07;
-//	}
-//
-
     }
+
   }
-
-
-  // cheat
-
-//	m_total_input_ghosts.set(3.168808781402895E-07);
-
-//  if (m_t < 5000.) {
- //   m_total_input_ghosts.set(0.0);
- // }
-
-
 
   m_total_input_ghosts.update_ghosts();
 
@@ -821,30 +783,35 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_log->message(2,
              "* Finding magnitude of potential gradient ...\n");
 
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+  {
+    IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u};
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
-     m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
+       m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
+    }
   }
 
   // sort the permutation array
 
-  int i_perm, j_perm;
+  {
+    int i_perm, j_perm;
 
-  int i_offset = m_grid->xs();
-  int j_offset = m_grid->ys();
-  int sub_width_i = m_grid->xm();
-  int sub_width_j = m_grid->ym();
+    int i_offset = m_grid->xs();
+    int j_offset = m_grid->ys();
+    int sub_width_i = m_grid->xm();
+    int sub_width_j = m_grid->ym();
 
-  int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
+    int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
-  m_log->message(2,
-             "* Sort permutation array ...\n");
+    m_log->message(2,
+               "* Sort permutation array ...\n");
 
-  int counter = 0;
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+    IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient};
 
+    int counter = 0;
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
       i_now = i;
       j_now = j;
@@ -852,7 +819,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
       int backwards_count = counter - 1;
 
-	bool found_back;
+	    bool found_back;
 
       if(backwards_count < 0) {
         found_back = true;
@@ -863,7 +830,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       while (! found_back) {
 
 
-       cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); // get the next permutation cell
+        cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); // get the next permutation cell
 
         cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); // convert permutation to cell coordinates
 
@@ -884,49 +851,24 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
            found_back = true;
          }
 
+        }
 
-      }
-
-      counter++;
+        counter++;
+    }
   }
 
   m_log->message(2,
              "* testing output of m_gradient_permutation ...\n");
 
-//  for (Points p(*m_grid); p; p.next()) {
-//    const int i = p.i(), j = p.j();
-
-//  m_log->message(2,
-  //           "* %i %i %f\n", i, j, m_gradient_permutation(i,j));
-
- // }
-
 
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
 
-// Note: temporary cheat, uncomment this line when not cheating
   m_total_input_ghosts_temp.copy_from(m_total_input_ghosts);
-
-//  m_total_input_ghosts_temp.set(0.1);
 
 
   int num_i = m_grid->Mx();
   int num_j = m_grid->My();
 
-/*
-  double seconds_in_year = 365.0*24.0*3600.0;
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
-
-     if(i < num_i/2 && j < num_j / 2) {
-       m_total_input_ghosts_temp(i,j) = 5.0 / seconds_in_year;
-     } else {
-       m_total_input_ghosts_temp(i,j) = 0.0;
-     }
-
-  }
- 
-*/
   m_log->message(2,
              "* starting serial process ...\n");
   {
@@ -953,7 +895,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_log->message(2,
              "* placing m_total_input_ghosts_temp ...\n");
 
-    m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
+  m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
 
   m_log->message(2,
              "* placing m_hydro_gradient ...\n");
@@ -975,8 +917,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
-  m_log->message(2,
-            "* in serial process ...\n");
+        m_log->message(2,
+                       "* in serial process ...\n");
 
 
 
@@ -1005,7 +947,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         double pi = 3.14159265358979;
 
-  m_log->message(2,
+        m_log->message(2,
              "* switched up memory ...\n");
 
         int total_nodes = m_grid->xm() * m_grid->ym();
@@ -1032,7 +974,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Fill up those arrays
 
 
-  m_log->message(2,
+       m_log->message(2,
              "* assigning first arrays ...\n");
 
 

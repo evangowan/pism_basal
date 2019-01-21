@@ -347,6 +347,7 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydrology_fraction_overburden.define(output);
   m_processor_mask.define(output);
   m_pressure_temp.define(output);
+  m_gradient_permutation.define(output);
 
 }
 
@@ -367,6 +368,7 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_hydrology_fraction_overburden.write(output);
   m_processor_mask.write(output);
   m_pressure_temp.write(output);
+  m_gradient_permutation.write(output);
 }
 
 

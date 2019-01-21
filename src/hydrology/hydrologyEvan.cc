@@ -891,13 +891,13 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_log->message(2,
              "* testing output of m_gradient_permutation ...\n");
 
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+//  for (Points p(*m_grid); p; p.next()) {
+//    const int i = p.i(), j = p.j();
 
-  m_log->message(2,
-             "* %i %i %f\n", i, j, m_gradient_permutation(i,j));
+//  m_log->message(2,
+  //           "* %i %i %f\n", i, j, m_gradient_permutation(i,j));
 
-  }
+ // }
 
 
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
@@ -952,9 +952,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
              "* placing m_total_input_ghosts_temp ...\n");
 
     m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
-  m_log->message(2,
-             "* placing m_gradient_permutation ...\n");
-    m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
+
   m_log->message(2,
              "* placing m_hydro_gradient ...\n");
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
@@ -964,6 +962,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_log->message(2,
              "* placing m_hydro_gradient_dir_v ...\n");
     m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
+
+  m_log->message(2,
+             "* placing m_gradient_permutation ...\n");
+    m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
 
   m_log->message(2,
              "* starting ParallelSection ...\n");

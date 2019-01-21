@@ -888,6 +888,17 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       counter++;
   }
 
+  m_log->message(2,
+             "* testing output of m_gradient_permutation ...\n");
+
+  for (Points p(*m_grid); p; p.next()) {
+    const int i = p.i(), j = p.j();
+
+  m_log->message(2,
+             "* %i %i %f\n", i, j, m_gradient_permutation(i,j));
+
+  }
+
 
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
 

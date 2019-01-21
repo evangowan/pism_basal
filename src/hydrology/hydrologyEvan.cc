@@ -931,8 +931,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
-//  m_log->message(2,
-//             "* in serial process ...\n");
+  m_log->message(2,
+            "* in serial process ...\n");
 
 
 
@@ -961,8 +961,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         double pi = 3.14159265358979;
 
-//  m_log->message(2,
-//             "* switched up memory ...\n");
+  m_log->message(2,
+             "* switched up memory ...\n");
 
         int total_nodes = m_grid->xm() * m_grid->ym();
 
@@ -988,8 +988,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Fill up those arrays
 
 
-//  m_log->message(2,
-//             "* assigning first arrays ...\n");
+  m_log->message(2,
+             "* assigning first arrays ...\n");
 
 
 
@@ -1014,8 +1014,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           }
         }
 
-//  m_log->message(2,
- //            "* assigned first arrays ...\n");
+  m_log->message(2,
+             "* assigned first arrays ...\n");
 
         // read in the permutation and separate per processor
         double serial_permutation[number_of_processors][max_points];
@@ -1030,8 +1030,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         int i_temp, j_temp, permutation_index;
 
-//  m_log->message(2,
-//            "* assigning second arrays ...\n");
+  m_log->message(2,
+            "* assigning second arrays ...\n");
 
         for (int j = 0; j < num_j; j++) {
           for (int i = 0; i < num_i; i++) {
@@ -1256,7 +1256,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   }
 
-
+  m_log->message(2,
+             "* finished serial process ...\n");
   m_total_input_ghosts.copy_from(m_total_input_ghosts_temp);
 
 

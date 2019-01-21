@@ -922,11 +922,18 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_offset_mask_v.put_on_proc0(*m_offset_mask_v_p0);
     m_width_mask_u.put_on_proc0(*m_width_mask_u_p0);
     m_width_mask_v.put_on_proc0(*m_width_mask_v_p0);
+
+  m_log->message(2,
+             "* Ooooooh, we're halfway there ...\n");
+
     m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
     m_hydro_gradient_dir_u.put_on_proc0(*m_hydro_gradient_dir_u_p0);
     m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
+
+  m_log->message(2,
+             "* starting ParallelSection ...\n");
 
     ParallelSection rank0(m_grid->com);
     try {

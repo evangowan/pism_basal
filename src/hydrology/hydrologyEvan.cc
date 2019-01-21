@@ -1308,7 +1308,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   // need to grab the overburden pressure for the calculation of the hydrology scheme
 
   {
-  ParallelSection loop(m_grid->com);
+    ParallelSection loop(m_grid->com);
     try {
 
 
@@ -1334,107 +1334,118 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   m_hydrology_fraction_overburden.set(1.0);
 
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
 
-    // pressure gradient magnitude
-//    m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir(i,j).v,2.0) + pow(m_hydro_gradient_dir(i,j).u,2.0));
+  {
+    ParallelSection loop(m_grid->com);
+    try {
 
-    // surface gradient magnitude
-    m_surface_gradient(i,j) = sqrt(pow(m_surface_gradient_dir(i,j).v,2.0) + pow(m_surface_gradient_dir(i,j).u,2.0));
+      IceModelVec::AccessList list{&m_surface_gradient, &m_surface_gradient_dir, &m_volume_water_flux, &m_total_input_ghosts, &m_tunnel_cross_section, &m_pressure_temp, &m_velbase_mag, &m_hydrology_effective_pressure, &m_hydrology_fraction_overburden, &mask};
 
-    // Water discharge
-    // Arnold and Sharp (2002) assumed the volume water flux was the same through tunnels and cavities
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
 
-    m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
+        // surface gradient magnitude
+        m_surface_gradient(i,j) = sqrt(pow(m_surface_gradient_dir(i,j).v,2.0) + pow(m_surface_gradient_dir(i,j).u,2.0));
 
+        // Water discharge
+        // Arnold and Sharp (2002) assumed the volume water flux was the same through tunnels and cavities
 
-    // Rothleisburger tunnel radius
-    // equation A.10 from Arnold and Sharp (2002)
-
-    if(m_surface_gradient(i,j) > 1.0e-8) {
-
-      m_tunnel_cross_section(i,j) = pow(channel_flow_constant * pow(m_volume_water_flux(i,j),2.0) / (rho_w * g * m_surface_gradient(i,j)), 3.0/8.0);
+        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
 
 
-    } else{
-      m_tunnel_cross_section(i,j) = 0.0;
+        // Rothleisburger tunnel radius
+        // equation A.10 from Arnold and Sharp (2002)
+
+        if(m_surface_gradient(i,j) > 1.0e-8) {
+
+          m_tunnel_cross_section(i,j) = pow(channel_flow_constant * pow(m_volume_water_flux(i,j),2.0) / (rho_w * g * m_surface_gradient(i,j)), 3.0/8.0);
+
+
+        } else{
+          m_tunnel_cross_section(i,j) = 0.0;
+        }
+
+
+        // Tunnel effective pressure
+        // Equation A.8 from Arnold and Sharp (2002)
+
+        double effective_pressure_tunnel;
+        if(m_total_input_ghosts(i,j) > 1.0e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
+          effective_pressure_tunnel = pow( (rho_w * g * m_surface_gradient(i,j) * m_volume_water_flux(i,j)) / 
+                                             (rho_i * arrhenius_parameter * latent_heat * m_tunnel_cross_section(i,j)), (1.0 / Glen_exponent));
+        } else {
+          effective_pressure_tunnel = m_pressure_temp(i,j);
+        }
+
+    /*
+        // Fowler suggested that the effective pressure become atmospheric, but I am setting it to be some fraction of the overburden
+        if(effective_pressure_tunnel / m_pressure_temp(i,j) > max_effective_pressure_ratio ) {
+          effective_pressure_tunnel = max_effective_pressure_ratio * m_pressure_temp(i,j);
+        }
+    */
+
+        // Cavity effective pressure
+        // Equation A.11 from Arnold and Sharp (2002) (note that the equation is wrong in the paper, see equation 4.16 in Fowler (1987))
+        double effective_pressure_cavity;
+
+        double number_of_cavities = cavity_spacing *  tunnel_spacing;
+
+
+        if(m_total_input_ghosts(i,j) > 1e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
+          effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_surface_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) * 
+                                                                  ( m_volume_water_flux(i,j) / (number_of_cavities * cavity_area) ) ), (1.0 / Glen_exponent));
+        } else {
+          effective_pressure_cavity = m_pressure_temp(i,j);
+        }
+
+
+        // tunnel stability critical value
+        // equation A.13 from Arnold and Sharp (2002)
+        double critical_stability = pow((3.0 * Glen_exponent * m_tunnel_cross_section(i,j) / (cavity_area * cavity_spacing * tunnel_spacing)), ((4.0-mu)/mu));
+
+
+        // tunnel stability value
+        // equation A.12 from Arnold and Sharp (2002)
+        double tunnel_stability = bump_ratio * m_velbase_mag(i,j) / ( bedrock_wavelength * arrhenius_parameter * pow(effective_pressure_tunnel, Glen_exponent));
+
+
+        if(m_total_input_ghosts(i,j) < 1e-12) { // essentially no water available
+
+          m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
+
+          m_hydrosystem(i,j) = 0.;
+
+        } else if(tunnel_stability < critical_stability) { // tunnels are stable, so take that as the effective pressure
+
+          m_hydrology_effective_pressure(i,j) = effective_pressure_tunnel;
+          m_hydrosystem(i,j) = 1.;
+
+        } else { // cavity system
+
+          m_hydrology_effective_pressure(i,j) = effective_pressure_cavity;
+          m_hydrosystem(i,j) = 2.;
+
+        }
+
+        if (m_hydrology_effective_pressure(i,j) > m_pressure_temp(i,j)) {
+          m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
+        }
+
+        if(m_pressure_temp(i,j) > 0.0) {
+          m_hydrology_fraction_overburden(i,j) = m_hydrology_effective_pressure(i,j) / m_pressure_temp(i,j);
+        }
+
+        if(mask.grounded_ice(i,j) && m_hydrology_effective_pressure(i,j) < 0.01 * m_pressure_temp(i,j)) {
+         m_hydrology_effective_pressure(i,j) = 0.01 * m_pressure_temp(i,j);
+        }
+
+      }
+
+    } catch (...) {
+      loop.failed();
     }
-
-
-    // Tunnel effective pressure
-    // Equation A.8 from Arnold and Sharp (2002)
-
-    double effective_pressure_tunnel;
-    if(m_total_input_ghosts(i,j) > 1.0e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-      effective_pressure_tunnel = pow( (rho_w * g * m_surface_gradient(i,j) * m_volume_water_flux(i,j)) / 
-                                         (rho_i * arrhenius_parameter * latent_heat * m_tunnel_cross_section(i,j)), (1.0 / Glen_exponent));
-    } else {
-      effective_pressure_tunnel = m_pressure_temp(i,j);
-    }
-
-/*
-    // Fowler suggested that the effective pressure become atmospheric, but I am setting it to be some fraction of the overburden
-    if(effective_pressure_tunnel / m_pressure_temp(i,j) > max_effective_pressure_ratio ) {
-      effective_pressure_tunnel = max_effective_pressure_ratio * m_pressure_temp(i,j);
-    }
-*/
-
-    // Cavity effective pressure
-    // Equation A.11 from Arnold and Sharp (2002) (note that the equation is wrong in the paper, see equation 4.16 in Fowler (1987))
-    double effective_pressure_cavity;
-
-    double number_of_cavities = cavity_spacing *  tunnel_spacing;
-
-
-    if(m_total_input_ghosts(i,j) > 1e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-      effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_surface_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) * 
-                                                              ( m_volume_water_flux(i,j) / (number_of_cavities * cavity_area) ) ), (1.0 / Glen_exponent));
-    } else {
-      effective_pressure_cavity = m_pressure_temp(i,j);
-    }
-
-
-    // tunnel stability critical value
-    // equation A.13 from Arnold and Sharp (2002)
-    double critical_stability = pow((3.0 * Glen_exponent * m_tunnel_cross_section(i,j) / (cavity_area * cavity_spacing * tunnel_spacing)), ((4.0-mu)/mu));
-
-
-    // tunnel stability value
-    // equation A.12 from Arnold and Sharp (2002)
-    double tunnel_stability = bump_ratio * m_velbase_mag(i,j) / ( bedrock_wavelength * arrhenius_parameter * pow(effective_pressure_tunnel, Glen_exponent));
-
-
-    if(m_total_input_ghosts(i,j) < 1e-12) { // essentially no water available
-
-      m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
-
-      m_hydrosystem(i,j) = 0.;
-
-    } else if(tunnel_stability < critical_stability) { // tunnels are stable, so take that as the effective pressure
-
-      m_hydrology_effective_pressure(i,j) = effective_pressure_tunnel;
-      m_hydrosystem(i,j) = 1.;
-
-    } else { // cavity system
-
-      m_hydrology_effective_pressure(i,j) = effective_pressure_cavity;
-      m_hydrosystem(i,j) = 2.;
-
-    }
-
-    if (m_hydrology_effective_pressure(i,j) > m_pressure_temp(i,j)) {
-      m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
-    }
-
-    if(m_pressure_temp(i,j) > 0.0) {
-      m_hydrology_fraction_overburden(i,j) = m_hydrology_effective_pressure(i,j) / m_pressure_temp(i,j);
-    }
-
-    if(mask.grounded_ice(i,j) && m_hydrology_effective_pressure(i,j) < 0.01 * m_pressure_temp(i,j)) {
-     m_hydrology_effective_pressure(i,j) = 0.01 * m_pressure_temp(i,j);
-    }
-
+    loop.check();
+  
   }
 
 

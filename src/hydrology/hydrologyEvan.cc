@@ -772,6 +772,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   }
 
+
+  m_log->message(2,
+             "* Finished filling til ...\n");
+
   m_total_input_ghosts.update_ghosts();
 
   // we're going to need the potential gradient

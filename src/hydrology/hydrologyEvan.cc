@@ -1292,6 +1292,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   m_log->message(2,
              "* finished serial process ...\n");
+
   m_total_input_ghosts.copy_from(m_total_input_ghosts_temp);
 
 
@@ -1305,16 +1306,29 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
   // need to grab the overburden pressure for the calculation of the hydrology scheme
-//  overburden_pressure(m_pressure_temp);
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
 
-    m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
+  {
+  ParallelSection loop(m_grid->com);
+    try {
 
-//  m_log->message(2,
-//             "* pressure, thk %f %f\n", m_pressure_temp(i,j), temp_thk(i,j));
+
+      IceModelVec::AccessList list{&m_pressure_temp, &temp_thk};
+
+
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
+
+        m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
+
+      }
+    } catch (...) {
+      loop.failed();
+    }
+    loop.check();
+  
   }
 
+ 
   m_log->message(2,
              "* Calculating hydrology type and flux ...\n");
 

@@ -664,8 +664,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-//  m_log->message(2,
-//             "* Starting hydrologyEvan::update_impl ...\n");
+  m_log->message(2,
+             "* Starting hydrologyEvan::update_impl ...\n");
 
   // if asked for the identical time interval as last time, then do nothing
 //  if ((fabs(icet - m_t) < 1e-6) && (fabs(icedt - m_dt) < 1e-6)) {
@@ -750,6 +750,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // first we need to find out if the water input is sufficient to fill up the till in the cell
 
+  m_log->message(2,
+             "* Filling till ...\n");
+
+
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
@@ -812,6 +816,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // find the magnitude of the potential gradient
 
+  m_log->message(2,
+             "* Finding magnitude of potential gradient ...\n");
+
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
@@ -829,6 +836,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
+  m_log->message(2,
+             "* Sort permutation array ...\n");
 
   int counter = 0;
   for (Points p(*m_grid); p; p.next()) {
@@ -905,8 +914,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   }
  
 */
-//  m_log->message(2,
-//             "* starting serial process ...\n");
+  m_log->message(2,
+             "* starting serial process ...\n");
   {
     m_processor_mask.put_on_proc0(*m_processor_mask_p0);
     m_offset_mask_u.put_on_proc0(*m_offset_mask_u_p0);
@@ -1057,8 +1066,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
      // distribute the water
-//  m_log->message(2,
-//             "* distributing water ...\n");
+  m_log->message(2,
+             "* distributing water ...\n");
 
         bool finished = false;
 
@@ -1254,11 +1263,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   // now we have the water input rate, it is possible to calculate the tunnel shape and the critical tunnel stability 
 
   const double bump_ratio = bump_amplitude / bedrock_wavelength;
-
+  m_log->message(2,
+             "* updating velocity ...\n");
   update_velbase_mag(m_velbase_mag);
 
-//  m_log->message(2,
-//             "* finished updating velocity ...\n");
+
 
   // need to grab the overburden pressure for the calculation of the hydrology scheme
 //  overburden_pressure(m_pressure_temp);
@@ -1270,6 +1279,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //  m_log->message(2,
 //             "* pressure, thk %f %f\n", m_pressure_temp(i,j), temp_thk(i,j));
   }
+
+  m_log->message(2,
+             "* Calculating hydrology type and flux ...\n");
 
   m_hydrology_fraction_overburden.set(1.0);
 
@@ -1377,8 +1389,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   }
 
 
-//  m_log->message(2,
-//             "* finished hydrologyEvan::update_impl ...\n");
+  m_log->message(2,
+             "* finished hydrologyEvan::update_impl ...\n");
 }
 
 

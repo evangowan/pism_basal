@@ -130,8 +130,8 @@ void MohrCoulombYieldStressEvan::write_model_state_impl(const PIO &output) const
  */
 void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
-//  m_log->message(2,
-//             "* Starting MohrCoulombYieldStressEvan::update_impl ...\n");
+  m_log->message(2,
+             "* Starting MohrCoulombYieldStressEvan::update_impl ...\n");
 //
   bool slippery_grounding_lines = m_config->get_boolean("basal_yield_stress.slippery_grounding_lines");
 
@@ -170,8 +170,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
   }
 
-//  m_log->message(2,
-//             "* calculating ...\n");
+  m_log->message(2,
+             "* calculating basal strength for each cell ...\n");
 
 
   for (Points p(*m_grid); p; p.next()) {
@@ -270,9 +270,15 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 */
 
     }
+
+
 //  m_log->message(2,
 //             "* %i %i %f ...\n", i, j, m_basal_yield_stress(i, j));
   }
+
+
+  m_log->message(2,
+             "* Finished MohrCoulombYieldStressEvan::update_impl ...\n");
 
   m_basal_yield_stress.update_ghosts();
 }

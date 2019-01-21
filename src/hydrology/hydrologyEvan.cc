@@ -917,19 +917,41 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_log->message(2,
              "* starting serial process ...\n");
   {
+
+  m_log->message(2,
+             "* placing m_processor_mask ...\n");
+
     m_processor_mask.put_on_proc0(*m_processor_mask_p0);
+  m_log->message(2,
+             "* placing m_offset_mask_u ...\n");
     m_offset_mask_u.put_on_proc0(*m_offset_mask_u_p0);
+  m_log->message(2,
+             "* placing m_offset_mask_v ...\n");
     m_offset_mask_v.put_on_proc0(*m_offset_mask_v_p0);
+
+  m_log->message(2,
+             "* placing m_width_mask_u ...\n");
     m_width_mask_u.put_on_proc0(*m_width_mask_u_p0);
+
+  m_log->message(2,
+             "* placing m_width_mask_v ...\n");
     m_width_mask_v.put_on_proc0(*m_width_mask_v_p0);
 
   m_log->message(2,
-             "* Ooooooh, we're halfway there ...\n");
+             "* placing m_total_input_ghosts_temp ...\n");
 
     m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
+  m_log->message(2,
+             "* placing m_gradient_permutation ...\n");
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
+  m_log->message(2,
+             "* placing m_hydro_gradient ...\n");
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
+  m_log->message(2,
+             "* placing m_hydro_gradient_dir_u ...\n");
     m_hydro_gradient_dir_u.put_on_proc0(*m_hydro_gradient_dir_u_p0);
+  m_log->message(2,
+             "* placing m_hydro_gradient_dir_v ...\n");
     m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
 
   m_log->message(2,

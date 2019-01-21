@@ -302,25 +302,26 @@ void hydrologyEvan::init() {
   int sub_width_j = m_grid->ym();
 
 
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+  ParallelSection loop(m_grid->com);
+  try {
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
-    m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g; 
+      m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g; 
 
-//    m_log->message(2,
-//             "%i %i %i\n", i, j, counter);
+      m_gradient_permutation(i, j) = counter;
+      m_processor_mask(i,j) = m_grid -> rank();
+      m_offset_mask_u(i,j) = i_offset;
+      m_offset_mask_v(i,j) = j_offset;
+      m_width_mask_u(i,j) = sub_width_i;
+      m_width_mask_v(i,j) = sub_width_j;
+      counter++;
 
-    m_gradient_permutation(i, j) = counter;
-    m_processor_mask(i,j) = m_grid -> rank();
-    m_offset_mask_u(i,j) = i_offset;
-    m_offset_mask_v(i,j) = j_offset;
-    m_width_mask_u(i,j) = sub_width_i;
-    m_width_mask_v(i,j) = sub_width_j;
-    counter++;
-
-
-
+    }
+  } catch (...) {
+    loop.failed();
   }
+  loop.check();
 
 //  m_log->message(2,
  //            "* Initializing Evan's null-transport subglacial hydrology model ...\n");
@@ -435,17 +436,23 @@ void hydrologyEvan::potential_gradient(IceModelVec2S &result_u, IceModelVec2S &r
     surface_gradient(m_surface_gradient_temp);
     bed_gradient(m_bed_gradient_temp);
 
-    for (Points p(*m_grid); p; p.next()) {
-      const int i = p.i(), j = p.j();
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
 
-      // Equation 6.13 in Cuffy and Paterson (2010)
-      // The flotation fraction is the ratio of the pressure of water to the pressure of ice, and will influence the effect of the bed gradient on the total potential gradient
-      // At a default, it is set to 0.8, which gives means the bed slope needs to be 2.7 times greater than the surface slope to have an equal influence on the direction of water flow.
-      m_gradient_temp_u(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
-      m_gradient_temp_v(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
+        // Equation 6.13 in Cuffy and Paterson (2010)
+        // The flotation fraction is the ratio of the pressure of water to the pressure of ice, and will influence the effect of the bed gradient on the total potential gradient
+        // At a default, it is set to 0.8, which gives means the bed slope needs to be 2.7 times greater than the surface slope to have an equal influence on the direction of water flow.
+        m_gradient_temp_u(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).u + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).u);
+        m_gradient_temp_v(i,j) = rho_i_g * (flotation_fraction * m_surface_gradient_temp(i,j).v + (density_ratio - flotation_fraction) * m_bed_gradient_temp(i,j).v);
 
 
+      }
+    } catch (...) {
+      loop.failed();
     }
+    loop.check();
   }
 
   result_u.copy_from(m_gradient_temp_u);
@@ -476,18 +483,24 @@ void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
   m_surface_elevation_temp.copy_from(surface_elevation);
   m_surface_elevation_temp.update_ghosts();
 
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+  ParallelSection loop(m_grid->com);
+  try {
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
-   
-    // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
-    result(i,j).u = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i+1,j) + m_surface_elevation_temp(i+1,j-1)) -
-			    (m_surface_elevation_temp(i-1,j+1) + 2.0 * m_surface_elevation_temp(i-1,j) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dx);
+     
+      // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
+      result(i,j).u = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i+1,j) + m_surface_elevation_temp(i+1,j-1)) -
+			      (m_surface_elevation_temp(i-1,j+1) + 2.0 * m_surface_elevation_temp(i-1,j) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dx);
 
-    result(i,j).v = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i,j+1) + m_surface_elevation_temp(i-1,j+1)) -
-			    (m_surface_elevation_temp(i+1,j-1) + 2.0 * m_surface_elevation_temp(i,j-1) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dy);
+      result(i,j).v = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i,j+1) + m_surface_elevation_temp(i-1,j+1)) -
+			      (m_surface_elevation_temp(i+1,j-1) + 2.0 * m_surface_elevation_temp(i,j-1) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dy);
 
+    }
+  } catch (...) {
+    loop.failed();
   }
+  loop.check();
 
 }
 
@@ -503,23 +516,29 @@ void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
   double u, v;
 
   IceModelVec::AccessList list;
-  list.add(bed_elevation);
+  list.add(result);
   list.add(m_bed_elevation_temp);
 
   m_bed_elevation_temp.copy_from(bed_elevation);
   m_bed_elevation_temp.update_ghosts();
 
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+  ParallelSection loop(m_grid->com);
+  try {
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
-    // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
-    result(i,j).u = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i+1,j) + m_bed_elevation_temp(i+1,j-1)) -
-			    (m_bed_elevation_temp(i-1,j+1) + 2.0 * m_bed_elevation_temp(i-1,j) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dx);
+      // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
+      result(i,j).u = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i+1,j) + m_bed_elevation_temp(i+1,j-1)) -
+			      (m_bed_elevation_temp(i-1,j+1) + 2.0 * m_bed_elevation_temp(i-1,j) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dx);
 
-    result(i,j).v = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i,j+1) + m_bed_elevation_temp(i-1,j+1)) -
-			    (m_bed_elevation_temp(i+1,j-1) + 2.0 * m_bed_elevation_temp(i,j-1) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dy);
+      result(i,j).v = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i,j+1) + m_bed_elevation_temp(i-1,j+1)) -
+			      (m_bed_elevation_temp(i+1,j-1) + 2.0 * m_bed_elevation_temp(i,j-1) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dy);
 
+    }
+  } catch (...) {
+    loop.failed();
   }
+  loop.check();
 }
 
 
@@ -589,63 +608,70 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
   double seconds_in_year = 365.0*24.0*3600.0;
   
-  for (Points p(*m_grid); p; p.next()) {
-    const int i = p.i(), j = p.j();
+  ParallelSection loop(m_grid->com);
+  try {
+    for (Points p(*m_grid); p; p.next()) {
+      const int i = p.i(), j = p.j();
 
-/*
-  // cheat
-   result(i,j) = 0.0;
-   const double
-    x = m_grid->x(i),
-    y = m_grid->y(j); // hopefully the grid is always square
+  /*
+    // cheat
+     result(i,j) = 0.0;
+     const double
+      x = m_grid->x(i),
+      y = m_grid->y(j); // hopefully the grid is always square
 
-  // cheat
-    double melt_factor = -log10(surface_elevation(i,j)) / 3.0;
+    // cheat
+      double melt_factor = -log10(surface_elevation(i,j)) / 3.0;
 
 
-    if(melt_factor > 1.0) {
-      melt_factor = 1.0;
+      if(melt_factor > 1.0) {
+        melt_factor = 1.0;
+      }
+
+      if(y < -50000.0 && x >= -50000 && x <= 50000.0 && hydro_t > 10000.0 * seconds_in_year) {
+  //     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
+        m_melt_rate_local(i,j) =  100.*pow(10.0,melt_factor) / seconds_in_year;
+
+      }
+
+      if(y > 50000.0 && x >= -50000 && x <= 50000.0) {
+   //    m_melt_rate_local(i,j) = 0.5 / seconds_in_year;
+
+  //      m_melt_rate_local(i,j) = pow(10.0,melt_factor) / seconds_in_year * 0.25;
+
+      }
+      // end cheat
+
+  */
+
+      if (mask.icy(i, j)) {
+
+  //      if( m_bmelt_local(i,j) < 0.1 / seconds_in_year) {
+          result(i,j) = (use_const) ? const_bmelt : m_bmelt_local(i,j); // get the melt water from the base
+  //      } else {
+
+   //       result(i,j) = (use_const) ? const_bmelt : 0.1 / seconds_in_year; // get the melt water from the base
+   //     }
+
+        result(i,j) += m_melt_rate_local(i,j) *  const_water_from_surface; // add on the meltwater from the surface
+
+
+
+
+      } else {
+        result(i,j) = 0.0;
+      }
+
+
+
+   // m_log->message(2,
+   //            "* %i %i %e %e %f %f %f\n", i, j, m_melt_rate_local(i,j), result(i,j), surface_elevation(i,j), melt_factor, m_bmelt_local(i,j)*seconds_in_year);
     }
 
-    if(y < -50000.0 && x >= -50000 && x <= 50000.0 && hydro_t > 10000.0 * seconds_in_year) {
-//     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
-      m_melt_rate_local(i,j) =  100.*pow(10.0,melt_factor) / seconds_in_year;
-
-    }
-
-    if(y > 50000.0 && x >= -50000 && x <= 50000.0) {
- //    m_melt_rate_local(i,j) = 0.5 / seconds_in_year;
-
-//      m_melt_rate_local(i,j) = pow(10.0,melt_factor) / seconds_in_year * 0.25;
-
-    }
-    // end cheat
-
-*/
-
-    if (mask.icy(i, j)) {
-
-//      if( m_bmelt_local(i,j) < 0.1 / seconds_in_year) {
-        result(i,j) = (use_const) ? const_bmelt : m_bmelt_local(i,j); // get the melt water from the base
-//      } else {
-
- //       result(i,j) = (use_const) ? const_bmelt : 0.1 / seconds_in_year; // get the melt water from the base
- //     }
-
-      result(i,j) += m_melt_rate_local(i,j) *  const_water_from_surface; // add on the meltwater from the surface
-
-
-
-
-    } else {
-      result(i,j) = 0.0;
-    }
-
-
-
- // m_log->message(2,
- //            "* %i %i %e %e %f %f %f\n", i, j, m_melt_rate_local(i,j), result(i,j), surface_elevation(i,j), melt_factor, m_bmelt_local(i,j)*seconds_in_year);
+  } catch (...) {
+    loop.failed();
   }
+  loop.check();
 
 }
 
@@ -732,43 +758,49 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     IceModelVec::AccessList list{&m_Wtil, &mask, &m_till_cover, &m_total_input_ghosts};
 
-    for (Points p(*m_grid); p; p.next()) {
-      const int i = p.i(), j = p.j();
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
 
 
-      if ( mask.ice_free(i,j) && ! mask.ocean(i,j)) {
-        m_Wtil(i,j) = 0.0;
+        if ( mask.ice_free(i,j) && ! mask.ocean(i,j)) {
+          m_Wtil(i,j) = 0.0;
 
-      } else if (mask.ocean(i,j)) {
+        } else if (mask.ocean(i,j)) {
 
-	      m_Wtil(i,j) = tillwat_max; // have to assume that sediments under water are saturated. important for when the ice advances, so it doesn't have to fill up.
+	        m_Wtil(i,j) = tillwat_max; // have to assume that sediments under water are saturated. important for when the ice advances, so it doesn't have to fill up.
 
-      } else {
-
-        // calculate the amount of water in the till
-        double Wtill_before = m_Wtil(i,j);
-        double Wtill_after;
-        double before_wat=m_total_input_ghosts(i,j);
-        if (m_till_cover(i,j) < 0.01) { // no till
-          Wtill_after = Wtill_before;
         } else {
-          Wtill_after = m_Wtil(i,j) + icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j);
+
+          // calculate the amount of water in the till
+          double Wtill_before = m_Wtil(i,j);
+          double Wtill_after;
+          double before_wat=m_total_input_ghosts(i,j);
+          if (m_till_cover(i,j) < 0.01) { // no till
+            Wtill_after = Wtill_before;
+          } else {
+            Wtill_after = m_Wtil(i,j) + icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j);
+          }
+
+          m_Wtil(i,j) = std::min(std::max(0.0, Wtill_after), tillwat_max);
+
+          if(m_Wtil(i,j) < tillwat_max && m_till_cover(i,j) > 0.01) { // all of the water is taken up by the sediments
+             m_total_input_ghosts(i,j) = 0.0;
+          } else { // determine how much water was taken up by the sediments and subtract it from the total water
+
+            double water_in_till = ((Wtill_before - Wtill_after)  / icedt + tillwat_decay_rate) * m_till_cover(i,j);
+            m_total_input_ghosts(i,j) -= water_in_till;
+
+          }
+
+
         }
-
-        m_Wtil(i,j) = std::min(std::max(0.0, Wtill_after), tillwat_max);
-
-        if(m_Wtil(i,j) < tillwat_max && m_till_cover(i,j) > 0.01) { // all of the water is taken up by the sediments
-           m_total_input_ghosts(i,j) = 0.0;
-        } else { // determine how much water was taken up by the sediments and subtract it from the total water
-
-          double water_in_till = ((Wtill_before - Wtill_after)  / icedt + tillwat_decay_rate) * m_till_cover(i,j);
-          m_total_input_ghosts(i,j) -= water_in_till;
-
-        }
-
-
       }
+    } catch (...) {
+      loop.failed();
     }
+    loop.check();
 
   }
 
@@ -789,11 +821,17 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   {
     IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u};
-    for (Points p(*m_grid); p; p.next()) {
-      const int i = p.i(), j = p.j();
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
 
-       m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
+         m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
+      }
+    } catch (...) {
+      loop.failed();
     }
+    loop.check();
   }
 
   // sort the permutation array
@@ -814,51 +852,57 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient};
 
     int counter = 0;
-    for (Points p(*m_grid); p; p.next()) {
-      const int i = p.i(), j = p.j();
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
 
-      i_now = i;
-      j_now = j;
-      cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+        i_now = i;
+        j_now = j;
+        cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
 
-      int backwards_count = counter - 1;
+        int backwards_count = counter - 1;
 
-	    bool found_back;
+	      bool found_back;
 
-      if(backwards_count < 0) {
-        found_back = true;
-      } else {
-        found_back = false;
-      }
-
-      while (! found_back) {
-
-
-        cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); // get the next permutation cell
-
-        cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); // convert permutation to cell coordinates
-
-        if( m_hydro_gradient(i_current, j_current) < m_hydro_gradient(i_compare, j_compare)) { // swap if true
-
-          double temp_permutation = m_gradient_permutation(i_next, j_next);
-          m_gradient_permutation(i_next, j_next) = m_gradient_permutation(i_now, j_now);
-          m_gradient_permutation(i_now, j_now) = temp_permutation;
-          i_now = i_next;
-          j_now = j_next;
-          backwards_count--;
-
-         } else { // found the natural position for the sort
-           found_back = true;
-         }
-
-         if(backwards_count < 0) {
-           found_back = true;
-         }
-
+        if(backwards_count < 0) {
+          found_back = true;
+        } else {
+          found_back = false;
         }
 
-        counter++;
+        while (! found_back) {
+
+
+          cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); // get the next permutation cell
+
+          cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); // convert permutation to cell coordinates
+
+          if( m_hydro_gradient(i_current, j_current) < m_hydro_gradient(i_compare, j_compare)) { // swap if true
+
+            double temp_permutation = m_gradient_permutation(i_next, j_next);
+            m_gradient_permutation(i_next, j_next) = m_gradient_permutation(i_now, j_now);
+            m_gradient_permutation(i_now, j_now) = temp_permutation;
+            i_now = i_next;
+            j_now = j_next;
+            backwards_count--;
+
+           } else { // found the natural position for the sort
+             found_back = true;
+           }
+
+           if(backwards_count < 0) {
+             found_back = true;
+           }
+
+          }
+
+          counter++;
+      }
+    } catch (...) {
+      loop.failed();
     }
+    loop.check();
   }
 
   m_log->message(2,

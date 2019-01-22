@@ -307,7 +307,7 @@ void hydrologyEvan::init() {
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
-      m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g; 
+      m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g;
 
       m_gradient_permutation(i, j) = (double)counter;
       m_processor_mask(i,j) = m_grid -> rank();
@@ -488,7 +488,7 @@ void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
-     
+
       // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
       result(i,j).u = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i+1,j) + m_surface_elevation_temp(i+1,j-1)) -
 			      (m_surface_elevation_temp(i-1,j+1) + 2.0 * m_surface_elevation_temp(i-1,j) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dx);
@@ -588,7 +588,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
   IceModelVec::AccessList list{&m_bmelt_local, &mask, &result, &surface_elevation};
 // Need to grab the meltrate from PSTemperature Index
-  list.add(m_melt_rate_local); 
+  list.add(m_melt_rate_local);
 
 
   if(m_surfaceT) {
@@ -607,7 +607,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
  //   m_melt_rate_local.set(5.0);
 
   double seconds_in_year = 365.0*24.0*3600.0;
-  
+
   ParallelSection loop(m_grid->com);
   try {
     for (Points p(*m_grid); p; p.next()) {
@@ -682,7 +682,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 This is a non-conservative hydrology model, based on a combination of the sediment deformation
 model that is default in PISM, and the tunnel/cavity hydrology model used by Arnold and Sharp (2002).
 The model first calculates if the water input is sufficient to fill up the sediments in the grid
-cell, and then if it does, determines whether there is enough water input to have a 
+cell, and then if it does, determines whether there is enough water input to have a
 tunnel or cavity based drainage system. This takes into account the amount of the base
 is covered by sediments (i.e. in places like the Canadian Shield, there is rock sticking out
 that does not have water storage).  In this way, a region regarded as mostly rock is more likely
@@ -734,7 +734,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //             "* dx: %f\n", dx);
 
   // grab the input rate, which will be the sum of the meltwater generated from basal heating, and meltwater from the surface
-  get_input_rate(icet,icedt, m_total_input_ghosts); 
+  get_input_rate(icet,icedt, m_total_input_ghosts);
 
 
   if (tillwat_max < 0.0) {
@@ -962,6 +962,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_log->message(2,
              "* starting ParallelSection ...\n");
 
+  /*
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
@@ -1075,7 +1076,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             processor = processor_mask_vec[vector_index];
             processor_point_counter[processor]++; // increment the number of points in that particular processor
 
-            
+
             cell_coordinates(gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
 
             permutation_index = j_temp * num_j + i_temp;
@@ -1128,7 +1129,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                 lowest_processor = processor_counter;
                 found_first = true;
               } else {
- 
+
                 if( gradient_storage[processor_counter][processor_point_counter[processor_counter]] < lowest_gradient) { // use this as the next point
                   lowest_gradient = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
                   lowest_index = processor_point_counter[processor_counter];
@@ -1141,7 +1142,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           }
 
 
-          if (found_first) { 
+          if (found_first) {
 
 
             if (gradient_storage[lowest_processor][lowest_index] > 1e-9) { // distribute water
@@ -1217,7 +1218,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                 if(distribute) { // distribute water
 
                   // this is a cos^2 function, integrated, and scaled to have the sum under the curve be 1
-                  water_store_multiplier[dir_counter] = 2.0/pi * ( ((next_dir - direction) / 2.0 + sin(2.0*(next_dir-direction)) / 4.0) - 
+                  water_store_multiplier[dir_counter] = 2.0/pi * ( ((next_dir - direction) / 2.0 + sin(2.0*(next_dir-direction)) / 4.0) -
                                                                   ((current_dir - direction) / 2.0 + sin(2.0*(current_dir-direction)) / 4.0));
 
 
@@ -1233,39 +1234,39 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
               }
 
               int neighbor_index =  index - 1; // goes left
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[0]*total_input_ghosts_temp_vec[index]
                                                             + water_store_multiplier[11]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index + (-1) + (-1) * num_i; // goes down left
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[1]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index +  (-1) * num_i; // goes down
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[2]*total_input_ghosts_temp_vec[index]
                                                             + water_store_multiplier[3]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index + (1) + (-1) * num_i; // goes down right
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[4]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index + 1; // goes right
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[5]*total_input_ghosts_temp_vec[index]
                                                             + water_store_multiplier[6]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index + (1) + (1) * num_i; // goes up right
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[7]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index +  (1) * num_i; // goes up
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[8]*total_input_ghosts_temp_vec[index]
                                                             + water_store_multiplier[9]*total_input_ghosts_temp_vec[index];
 
               neighbor_index =  index + (-1) + (1) * num_i; // goes up left
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] 
+              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                             + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
 
             }
@@ -1287,7 +1288,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     rank0.check();
 
     m_total_input_ghosts_temp.get_from_proc0(*m_total_input_ghosts_temp_p0);
-
+*/
   }
 
   m_log->message(2,
@@ -1296,7 +1297,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_total_input_ghosts.copy_from(m_total_input_ghosts_temp);
 
 
-  // now we have the water input rate, it is possible to calculate the tunnel shape and the critical tunnel stability 
+  // now we have the water input rate, it is possible to calculate the tunnel shape and the critical tunnel stability
 
   const double bump_ratio = bump_amplitude / bedrock_wavelength;
   m_log->message(2,
@@ -1318,17 +1319,17 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();
 
-        m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g; 
+        m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g;
 
       }
     } catch (...) {
       loop.failed();
     }
     loop.check();
-  
+
   }
 
- 
+
   m_log->message(2,
              "* Calculating hydrology type and flux ...\n");
 
@@ -1374,7 +1375,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         double effective_pressure_tunnel;
         if(m_total_input_ghosts(i,j) > 1.0e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-          effective_pressure_tunnel = pow( (rho_w * g * m_surface_gradient(i,j) * m_volume_water_flux(i,j)) / 
+          effective_pressure_tunnel = pow( (rho_w * g * m_surface_gradient(i,j) * m_volume_water_flux(i,j)) /
                                              (rho_i * arrhenius_parameter * latent_heat * m_tunnel_cross_section(i,j)), (1.0 / Glen_exponent));
         } else {
           effective_pressure_tunnel = m_pressure_temp(i,j);
@@ -1395,7 +1396,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
         if(m_total_input_ghosts(i,j) > 1e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-          effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_surface_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) * 
+          effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_surface_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) *
                                                                   ( m_volume_water_flux(i,j) / (number_of_cavities * cavity_area) ) ), (1.0 / Glen_exponent));
         } else {
           effective_pressure_cavity = m_pressure_temp(i,j);
@@ -1448,7 +1449,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       loop.failed();
     }
     loop.check();
-  
+
   }
 
 
@@ -1460,7 +1461,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 // returns the coordinate of a cell
 void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_j, int i_offset, int j_offset, int& i, int& j){
 
-  
+
   j = int(in_number) / number_i; // number of rows
 
   i = in_number - (j * number_i); // column offset

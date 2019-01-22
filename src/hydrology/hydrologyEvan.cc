@@ -246,7 +246,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_width_mask_v_p0 = m_width_mask_v.allocate_proc0_copy();
   m_total_input_ghosts_p0 = m_total_input_ghosts.allocate_proc0_copy();
   m_total_input_ghosts_temp_p0 = m_total_input_ghosts_temp.allocate_proc0_copy();
-  m_gradient_permutation_p0 =m_gradient_permutation.allocate_proc0_copy();
+  m_gradient_permutation_p0 = m_gradient_permutation.allocate_proc0_copy();
   m_hydro_gradient_p0 = m_hydro_gradient.allocate_proc0_copy();
   m_hydro_gradient_dir_u_p0 = m_hydro_gradient_dir_u.allocate_proc0_copy();
   m_hydro_gradient_dir_v_p0 = m_hydro_gradient_dir_v.allocate_proc0_copy();
@@ -309,7 +309,7 @@ void hydrologyEvan::init() {
 
       m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g; 
 
-      m_gradient_permutation(i, j) = counter;
+      m_gradient_permutation(i, j) = (double)counter;
       m_processor_mask(i,j) = m_grid -> rank();
       m_offset_mask_u(i,j) = i_offset;
       m_offset_mask_v(i,j) = j_offset;
@@ -1461,10 +1461,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_j, int i_offset, int j_offset, int& i, int& j){
 
   
-  j = floor(in_number / double(number_i)); // number of rows
+  j = int(in_number) / number_i; // number of rows
 
-
-  i = rint(in_number - double(j) * double(number_i)); // column offset
+  i = in_number - (j * number_i); // column offset
 
   i = i + i_offset;
   j = j + j_offset;

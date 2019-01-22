@@ -959,10 +959,16 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
              "* placing m_gradient_permutation ...\n");
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
 
+
+//     double test = m_grid->rank();
+//     double test2 = GlobalSum(m_grid->com, test);
+//       m_log->message(2,
+//              "* Test %f ...\n", test2);
+
   m_log->message(2,
              "* starting ParallelSection ...\n");
 
-  /*
+
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
@@ -1233,41 +1239,58 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
               }
 
+              int max_ind = num_i * num_j;
               int neighbor_index =  index - 1; // goes left
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[0]*total_input_ghosts_temp_vec[index]
-                                                            + water_store_multiplier[11]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[0]*total_input_ghosts_temp_vec[index]
+                                                              + water_store_multiplier[11]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index + (-1) + (-1) * num_i; // goes down left
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[1]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[1]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index +  (-1) * num_i; // goes down
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[2]*total_input_ghosts_temp_vec[index]
-                                                            + water_store_multiplier[3]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[2]*total_input_ghosts_temp_vec[index]
+                                                              + water_store_multiplier[3]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index + (1) + (-1) * num_i; // goes down right
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[4]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[4]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index + 1; // goes right
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[5]*total_input_ghosts_temp_vec[index]
-                                                            + water_store_multiplier[6]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[5]*total_input_ghosts_temp_vec[index]
+                                                              + water_store_multiplier[6]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index + (1) + (1) * num_i; // goes up right
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[7]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[7]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index +  (1) * num_i; // goes up
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[8]*total_input_ghosts_temp_vec[index]
-                                                            + water_store_multiplier[9]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[8]*total_input_ghosts_temp_vec[index]
+                                                              + water_store_multiplier[9]*total_input_ghosts_temp_vec[index];
+              }
 
               neighbor_index =  index + (-1) + (1) * num_i; // goes up left
-              total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
-                                                            + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+                total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
+                                                              + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
+              }
 
             }
 
@@ -1288,7 +1311,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     rank0.check();
 
     m_total_input_ghosts_temp.get_from_proc0(*m_total_input_ghosts_temp_p0);
-*/
+
   }
 
   m_log->message(2,

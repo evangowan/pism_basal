@@ -485,16 +485,38 @@ void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
 
   ParallelSection loop(m_grid->com);
   try {
+
+    double point_store[3][3];
+    double u, v;
+    int i_low, i_high, j_low, j_high;
+
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
 
-      // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
-      result(i,j).u = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i+1,j) + m_surface_elevation_temp(i+1,j-1)) -
-			      (m_surface_elevation_temp(i-1,j+1) + 2.0 * m_surface_elevation_temp(i-1,j) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dx);
 
-      result(i,j).v = ((m_surface_elevation_temp(i+1,j+1) + 2.0 * m_surface_elevation_temp(i,j+1) + m_surface_elevation_temp(i-1,j+1)) -
-			      (m_surface_elevation_temp(i+1,j-1) + 2.0 * m_surface_elevation_temp(i,j-1) + m_surface_elevation_temp(i-1,j-1))) / (8.0 * dy);
+
+
+      i_high = high_i_check(i);
+      i_low = low_check(i);
+
+      j_high = high_j_check(j);
+      j_low = low_check(j);
+
+
+      point_store[0][0] = m_surface_elevation_temp(i_low,j_low);
+      point_store[0][1] = m_surface_elevation_temp(i_low,j);
+      point_store[0][2] = m_surface_elevation_temp(i_low,j_high);
+      point_store[1][0] = m_surface_elevation_temp(i,j_low);
+      point_store[1][1] = m_surface_elevation_temp(i,j); // this one should be safe without a check
+      point_store[1][2] = m_surface_elevation_temp(i,j_high);
+      point_store[2][0] = m_surface_elevation_temp(i_high,j_low);
+      point_store[2][1] = m_surface_elevation_temp(i_high,j);
+      point_store[2][2] = m_surface_elevation_temp(i_high,j_high);
+
+      finite_difference(point_store, u, v);
+      result(i,j).u = u;
+      result(i,j).v = v;
 
     }
   } catch (...) {
@@ -513,6 +535,10 @@ void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
     dx = m_grid->dx(),
     dy = m_grid->dy();
 
+
+  int num_j = m_grid->My();
+
+
   double u, v;
 
   IceModelVec::AccessList list;
@@ -524,15 +550,36 @@ void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
 
   ParallelSection loop(m_grid->com);
   try {
+    double point_store[3][3];
+    double u, v;
+    int i_low, i_high, j_low, j_high;
+
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
-      // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
-      result(i,j).u = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i+1,j) + m_bed_elevation_temp(i+1,j-1)) -
-			      (m_bed_elevation_temp(i-1,j+1) + 2.0 * m_bed_elevation_temp(i-1,j) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dx);
 
-      result(i,j).v = ((m_bed_elevation_temp(i+1,j+1) + 2.0 * m_bed_elevation_temp(i,j+1) + m_bed_elevation_temp(i-1,j+1)) -
-			      (m_bed_elevation_temp(i+1,j-1) + 2.0 * m_bed_elevation_temp(i,j-1) + m_bed_elevation_temp(i-1,j-1))) / (8.0 * dy);
+
+      i_high = high_i_check(i);
+      i_low = low_check(i);
+
+      j_high = high_j_check(j);
+      j_low = low_check(j);
+
+
+      point_store[0][0] = m_bed_elevation_temp(i_low,j_low);
+      point_store[0][1] = m_bed_elevation_temp(i_low,j);
+      point_store[0][2] = m_bed_elevation_temp(i_low,j_high);
+      point_store[1][0] = m_bed_elevation_temp(i,j_low);
+      point_store[1][1] = m_bed_elevation_temp(i,j); // this one should be safe without a check
+      point_store[1][2] = m_bed_elevation_temp(i,j_high);
+      point_store[2][0] = m_bed_elevation_temp(i_high,j_low);
+      point_store[2][1] = m_bed_elevation_temp(i_high,j);
+      point_store[2][2] = m_bed_elevation_temp(i_high,j_high);
+
+      finite_difference(point_store, u, v);
+
+      result(i,j).u = u;
+      result(i,j).v = v;
 
     }
   } catch (...) {
@@ -541,6 +588,63 @@ void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
   loop.check();
 }
 
+int hydrologyEvan::high_i_check(int i) {
+
+  int num_i = m_grid->Mx();
+  int i_high;
+
+
+  if(i+1 >= num_i) {
+    i_high = i;
+  } else {
+    i_high = i + 1;
+  }
+
+  return i_high;
+}
+
+int hydrologyEvan::high_j_check(int j) {
+
+  int num_j = m_grid->My();
+  int j_high;
+
+
+  if(j+1 >= num_j) {
+    j_high = j;
+  } else {
+    j_high = j + 1;
+  }
+
+  return j_high;
+}
+
+int hydrologyEvan::low_check(int i) {
+
+  int i_low;
+      if(i-1 < 0) {
+        i_low = i;
+      } else {
+        i_low = i - 1;
+      }
+  return i_low;
+
+}
+
+
+void hydrologyEvan::finite_difference(double point_array[3][3], double u, double v) {
+
+  const double
+    dx = m_grid->dx(),
+    dy = m_grid->dy();
+
+  // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
+  u = ((point_array[2][2] + 2.0 * point_array[1][2] + point_array[0][2]) -
+			      (point_array[2][0] + 2.0 * point_array[1][0] + point_array[0][0])) / (8.0 * dx);
+
+  v = ((point_array[2][2] + 2.0 * point_array[1][2] + point_array[0][2]) -
+			      (point_array[2][0] + 2.0 * point_array[1][0] + point_array[0][0])) / (8.0 * dy);
+
+}
 
 //! Compute the total water input rate into the basal hydrology layer in the ice-covered region, allowing time-varying input from a file.
 /*!
@@ -917,46 +1021,46 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   int num_i = m_grid->Mx();
   int num_j = m_grid->My();
 
-  m_log->message(2,
-             "* starting serial process ...\n");
+//  m_log->message(2,
+//             "* starting serial process ...\n");
   {
 
-  m_log->message(2,
-             "* placing m_processor_mask ...\n");
+//  m_log->message(2,
+//             "* placing m_processor_mask ...\n");
 
     m_processor_mask.put_on_proc0(*m_processor_mask_p0);
-  m_log->message(2,
-             "* placing m_offset_mask_u ...\n");
+//  m_log->message(2,
+//             "* placing m_offset_mask_u ...\n");
     m_offset_mask_u.put_on_proc0(*m_offset_mask_u_p0);
-  m_log->message(2,
-             "* placing m_offset_mask_v ...\n");
+//  m_log->message(2,
+//             "* placing m_offset_mask_v ...\n");
     m_offset_mask_v.put_on_proc0(*m_offset_mask_v_p0);
 
-  m_log->message(2,
-             "* placing m_width_mask_u ...\n");
+//  m_log->message(2,
+//             "* placing m_width_mask_u ...\n");
     m_width_mask_u.put_on_proc0(*m_width_mask_u_p0);
 
-  m_log->message(2,
-             "* placing m_width_mask_v ...\n");
+//  m_log->message(2,
+ //            "* placing m_width_mask_v ...\n");
     m_width_mask_v.put_on_proc0(*m_width_mask_v_p0);
 
-  m_log->message(2,
-             "* placing m_total_input_ghosts_temp ...\n");
+//  m_log->message(2,
+ //            "* placing m_total_input_ghosts_temp ...\n");
 
   m_total_input_ghosts_temp.put_on_proc0(*m_total_input_ghosts_temp_p0);
 
-  m_log->message(2,
-             "* placing m_hydro_gradient ...\n");
+//  m_log->message(2,
+//             "* placing m_hydro_gradient ...\n");
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
-  m_log->message(2,
-             "* placing m_hydro_gradient_dir_u ...\n");
+//  m_log->message(2,
+//             "* placing m_hydro_gradient_dir_u ...\n");
     m_hydro_gradient_dir_u.put_on_proc0(*m_hydro_gradient_dir_u_p0);
-  m_log->message(2,
-             "* placing m_hydro_gradient_dir_v ...\n");
+//  m_log->message(2,
+//             "* placing m_hydro_gradient_dir_v ...\n");
     m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
 
-  m_log->message(2,
-             "* placing m_gradient_permutation ...\n");
+//  m_log->message(2,
+//             "* placing m_gradient_permutation ...\n");
     m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
 
 
@@ -965,15 +1069,15 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //       m_log->message(2,
 //              "* Test %f ...\n", test2);
 
-  m_log->message(2,
-             "* starting ParallelSection ...\n");
+//  m_log->message(2,
+//             "* starting ParallelSection ...\n");
 
 
     ParallelSection rank0(m_grid->com);
     try {
       if (m_grid->rank() == 0) {
-        m_log->message(2,
-                       "* in serial process ...\n");
+//        m_log->message(2,
+//                       "* in serial process ...\n");
 
 
 

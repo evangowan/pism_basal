@@ -82,6 +82,11 @@ private:
 
   void cell_coordinates(double in_number, int number_i, int number_j, int i_offset, int j_offset, int& i, int& j);
 
+  int high_i_check(int i);
+  int high_j_check(int j);
+  int low_check(int i);
+  void finite_difference(double point_array[3][3], double u, double v);
+
 protected:
 
   petsc::Vec::Ptr m_offset_mask_u_p0, m_width_mask_u_p0, m_offset_mask_v_p0, m_width_mask_v_p0, m_processor_mask_p0, m_gradient_permutation_p0, m_total_input_ghosts_p0, m_total_input_ghosts_temp_p0, m_hydro_gradient_p0, m_hydro_gradient_dir_u_p0, m_hydro_gradient_dir_v_p0;

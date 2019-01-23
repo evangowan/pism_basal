@@ -908,7 +908,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
  // m_log->message(2,
 //             "* Finished filling til ...\n");
 
-  m_total_input_ghosts.update_ghosts();
+
 
   // we're going to need the potential gradient
   potential_gradient(m_hydro_gradient_dir_u,m_hydro_gradient_dir_v);
@@ -920,19 +920,26 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //             "* Finding magnitude of potential gradient ...\n");
 
   {
-    IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u};
+    IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u, &m_total_input_ghosts};
     ParallelSection loop(m_grid->com);
     try {
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();
 
-         m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
+        m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
+
+        // if the ice thickness is really small, don't bother distributing the water
+        if(temp_thk(i,j) <= 1.0) {
+          m_total_input_ghosts(i,j) = 0.0;
+        }
       }
     } catch (...) {
       loop.failed();
     }
     loop.check();
   }
+
+  m_total_input_ghosts.update_ghosts();
 
   // sort the permutation array
 

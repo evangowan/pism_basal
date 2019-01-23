@@ -818,7 +818,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                rho_i       = m_config->get_double("constants.ice.density"),
                latent_heat = m_config->get_double("constants.fresh_water.latent_heat_of_fusion"),
                shadowing_function = m_config->get_double("hydrology.shadowing_function"),
-               max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio")
+               max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio"),
+               ice_thickness_threshold = m_config->get_double("ice_thickness_threshold")
+
   ;
 
 
@@ -929,7 +931,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         m_hydro_gradient(i,j) = sqrt(pow(m_hydro_gradient_dir_v(i,j),2.0) + pow(m_hydro_gradient_dir_u(i,j),2.0));
 
         // if the ice thickness is really small, don't bother distributing the water
-        if(temp_thk(i,j) <= 1.0) {
+        if(temp_thk(i,j) <= ice_thickness_threshold) {
           m_total_input_ghosts(i,j) = 0.0;
         }
       }

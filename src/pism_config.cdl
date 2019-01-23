@@ -909,6 +909,12 @@ netcdf pism_config {
     pism_config:hydrology.floatation_fraction_type = "scalar";
     pism_config:hydrology.floatation_fraction_units = "pure number";
 
+    pism_config:hydrology.ice_thickness_threshold = 5.0;
+    pism_config:hydrology.ice_thickness_threshold_doc = "Ice thickness threshold required before water is distributed in HydrologyEvan";
+    pism_config:hydrology.ice_thickness_threshold_option = "ice_thickness_threshold";
+    pism_config:hydrology.ice_thickness_threshold_type = "scalar";
+    pism_config:hydrology.ice_thickness_threshold_units = "meter";
+
 
 //
 

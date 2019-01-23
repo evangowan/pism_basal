@@ -535,10 +535,6 @@ void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
     dx = m_grid->dx(),
     dy = m_grid->dy();
 
-
-  int num_j = m_grid->My();
-
-
   double u, v;
 
   IceModelVec::AccessList list;
@@ -631,7 +627,7 @@ int hydrologyEvan::low_check(int i) {
 }
 
 
-void hydrologyEvan::finite_difference(double point_array[3][3], double u, double v) {
+void hydrologyEvan::finite_difference(double point_array[3][3], double& u, double& v) {
 
   const double
     dx = m_grid->dx(),

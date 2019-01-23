@@ -85,7 +85,7 @@ private:
   int high_i_check(int i);
   int high_j_check(int j);
   int low_check(int i);
-  void finite_difference(double point_array[3][3], double u, double v);
+  void finite_difference(double point_array[3][3], double& u, double& v);
 
 protected:
 

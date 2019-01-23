@@ -922,7 +922,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //             "* Finding magnitude of potential gradient ...\n");
 
   {
-    IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u, &m_total_input_ghosts};
+    IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u, &m_total_input_ghosts, &temp_thk};
     ParallelSection loop(m_grid->com);
     try {
       for (Points p(*m_grid); p; p.next()) {

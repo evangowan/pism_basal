@@ -1341,53 +1341,53 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
               int max_ind = num_i * num_j;
               int neighbor_index =  index - 1; // goes left
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp > 0)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[0]*total_input_ghosts_temp_vec[index]
                                                               + water_store_multiplier[11]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index + (-1) + (-1) * num_i; // goes down left
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0) and (i_temp > 0)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[1]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index +  (-1) * num_i; // goes down
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[2]*total_input_ghosts_temp_vec[index]
                                                               + water_store_multiplier[3]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index + (1) + (-1) * num_i; // goes down right
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0) and (i_temp < num_i)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[4]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index + 1; // goes right
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp < num_i)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[5]*total_input_ghosts_temp_vec[index]
                                                               + water_store_multiplier[6]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index + (1) + (1) * num_i; // goes up right
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp < num_i) and (j_temp < num_j)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[7]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index +  (1) * num_i; // goes up
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp < num_j)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[8]*total_input_ghosts_temp_vec[index]
                                                               + water_store_multiplier[9]*total_input_ghosts_temp_vec[index];
               }
 
               neighbor_index =  index + (-1) + (1) * num_i; // goes up left
-              if ((neighbor_index >= 0) and (neighbor_index < max_ind)) {
+              if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp > 0) and (j_temp < num_j)) {
                 total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index]
                                                               + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
               }

@@ -634,8 +634,8 @@ void hydrologyEvan::finite_difference(double point_array[3][3], double& u, doubl
     dy = m_grid->dy();
 
   // third order finite difference method for calculationg gradient, equations 3 and 4 in Skidmore (1989)
-  u = ((point_array[2][2] + 2.0 * point_array[1][2] + point_array[0][2]) -
-			      (point_array[2][0] + 2.0 * point_array[1][0] + point_array[0][0])) / (8.0 * dx);
+  u = ((point_array[2][2] + 2.0 * point_array[2][1] + point_array[2][0]) -
+			      (point_array[0][2] + 2.0 * point_array[0][1] + point_array[0][0])) / (8.0 * dx);
 
   v = ((point_array[2][2] + 2.0 * point_array[1][2] + point_array[0][2]) -
 			      (point_array[2][0] + 2.0 * point_array[1][0] + point_array[0][0])) / (8.0 * dy);
@@ -852,8 +852,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // first we need to find out if the water input is sufficient to fill up the till in the cell
   {
-    m_log->message(2,
-               "* Filling till ...\n");
+//    m_log->message(2,
+//               "* Filling till ...\n");
 
 
     IceModelVec::AccessList list{&m_Wtil, &mask, &m_till_cover, &m_total_input_ghosts};
@@ -905,8 +905,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   }
 
 
-  m_log->message(2,
-             "* Finished filling til ...\n");
+ // m_log->message(2,
+//             "* Finished filling til ...\n");
 
   m_total_input_ghosts.update_ghosts();
 
@@ -916,8 +916,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // find the magnitude of the potential gradient
 
-  m_log->message(2,
-             "* Finding magnitude of potential gradient ...\n");
+//  m_log->message(2,
+//             "* Finding magnitude of potential gradient ...\n");
 
   {
     IceModelVec::AccessList list{&m_hydro_gradient, &m_hydro_gradient_dir_v, &m_hydro_gradient_dir_u};
@@ -946,8 +946,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
-    m_log->message(2,
-               "* Sort permutation array ...\n");
+//    m_log->message(2,
+//               "* Sort permutation array ...\n");
 
     IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient};
 
@@ -1005,8 +1005,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     loop.check();
   }
 
-  m_log->message(2,
-             "* testing output of m_gradient_permutation ...\n");
+//  m_log->message(2,
+//             "* testing output of m_gradient_permutation ...\n");
 
 
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation
@@ -1102,8 +1102,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         double pi = 3.14159265358979;
 
-        m_log->message(2,
-             "* switched up memory ...\n");
+ //       m_log->message(2,
+  //           "* switched up memory ...\n");
 
         int total_nodes = m_grid->xm() * m_grid->ym();
 
@@ -1129,8 +1129,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Fill up those arrays
 
 
-       m_log->message(2,
-             "* assigning first arrays ...\n");
+//       m_log->message(2,
+//             "* assigning first arrays ...\n");
 
 
 
@@ -1155,8 +1155,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           }
         }
 
-  m_log->message(2,
-             "* assigned first arrays ...\n");
+//  m_log->message(2,
+//             "* assigned first arrays ...\n");
 
         // read in the permutation and separate per processor
         double serial_permutation[number_of_processors][max_points];
@@ -1171,8 +1171,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         int i_temp, j_temp, permutation_index;
 
-  m_log->message(2,
-            "* assigning second arrays ...\n");
+//  m_log->message(2,
+//            "* assigning second arrays ...\n");
 
         for (int j = 0; j < num_j; j++) {
           for (int i = 0; i < num_i; i++) {
@@ -1207,8 +1207,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
      // distribute the water
-  m_log->message(2,
-             "* distributing water ...\n");
+//  m_log->message(2,
+//             "* distributing water ...\n");
 
         bool finished = false;
 
@@ -1414,8 +1414,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   }
 
-  m_log->message(2,
-             "* finished serial process ...\n");
+//  m_log->message(2,
+//             "* finished serial process ...\n");
 
   m_total_input_ghosts.copy_from(m_total_input_ghosts_temp);
 
@@ -1423,8 +1423,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   // now we have the water input rate, it is possible to calculate the tunnel shape and the critical tunnel stability
 
   const double bump_ratio = bump_amplitude / bedrock_wavelength;
-  m_log->message(2,
-             "* updating velocity ...\n");
+//  m_log->message(2,
+//             "* updating velocity ...\n");
   update_velbase_mag(m_velbase_mag);
 
 
@@ -1453,8 +1453,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   }
 
 
-  m_log->message(2,
-             "* Calculating hydrology type and flux ...\n");
+//  m_log->message(2,
+ //            "* Calculating hydrology type and flux ...\n");
 
   m_hydrology_fraction_overburden.set(1.0);
 
@@ -1465,8 +1465,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
       IceModelVec::AccessList list{&m_surface_gradient, &m_surface_gradient_dir, &m_volume_water_flux, &m_total_input_ghosts, &m_tunnel_cross_section, &m_pressure_temp, &m_velbase_mag, &m_hydrology_effective_pressure, &m_hydrology_fraction_overburden, &mask, &m_hydrosystem};
 
-  m_log->message(2,
-             "* Hydrology loop ...\n");
+//  m_log->message(2,
+//             "* Hydrology loop ...\n");
 
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();

@@ -819,7 +819,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                latent_heat = m_config->get_double("constants.fresh_water.latent_heat_of_fusion"),
                shadowing_function = m_config->get_double("hydrology.shadowing_function"),
                max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio"),
-               ice_thickness_threshold = m_config->get_double("ice_thickness_threshold")
+               ice_thickness_threshold = m_config->get_double("hydrology.ice_thickness_threshold")
 
   ;
 

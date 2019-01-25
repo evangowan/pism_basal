@@ -143,6 +143,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_till_cover.set_attrs("model_state",
                        "fraction of surface that is covered in till",
                        "1", "");
+  m_till_cover.set_time_independent(true);
 
   m_gradient_permutation.create(m_grid, "gradient_permutation", WITHOUT_GHOSTS);
   m_gradient_permutation.set_attrs("model_state",

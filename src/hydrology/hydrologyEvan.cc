@@ -274,7 +274,17 @@ void hydrologyEvan::init() {
   double rho_w       = m_config->get_double("constants.fresh_water.density");
   double g           = m_config->get_double("constants.standard_gravity");
 
-  m_till_cover.set(till_cover);
+
+  InputOptions opts = process_input_options(m_grid->com);
+
+  if (opts.type == INIT_RESTART) {
+    m_till_cover.read(opts.filename, opts.record);
+  } else if (opts.type == INIT_BOOTSTRAP) {
+    m_till_cover.regrid(opts.filename, OPTIONAL, till_cover);
+  } else {
+    m_till_cover.set(till_cover);
+  }
+
   m_volume_water_flux.set(0.0);
   m_hydrosystem.set(0.0);
 

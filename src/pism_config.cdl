@@ -184,6 +184,20 @@ netcdf pism_config {
     pism_config:basal_yield_stress.mohr_coulomb.topg_to_phi.topg_min_type = "scalar";
     pism_config:basal_yield_stress.mohr_coulomb.topg_to_phi.topg_min_units = "meters";
 
+// added by Evan
+
+    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor = 6.3376e-8;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_doc = "sliding factor K1 in Arnold and Sharp flow equation";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_type = "scalar";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_units = "meter^2 second-1 Pascal-1";
+
+
+    pism_config:basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor = 400;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor_doc = "sliding factor K2 in Arnold and Sharp flow equation";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor_type = "scalar";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor_units = "meters";
+
+
     pism_config:basal_yield_stress.slippery_grounding_lines = "no";
     pism_config:basal_yield_stress.slippery_grounding_lines_doc = "If yes, at icy grounded locations with bed elevations below sea level, within one cell of floating ice or ice-free ocean, make tauc as low as possible from the Mohr-Coulomb relation.  Specifically, at such locations replace the normally-computed tauc from the Mohr-Coulomb relation, which uses the effective pressure from the modeled amount of water in the till, by the minimum value of tauc from Mohr-Coulomb, i.e. by using the effective pressure corresponding to the maximum amount of till-stored water.  Does not alter the modeled or reported amount of till water, nor does this mechanism affect water conservation.";
     pism_config:basal_yield_stress.slippery_grounding_lines_option = "tauc_slippery_grounding_lines";

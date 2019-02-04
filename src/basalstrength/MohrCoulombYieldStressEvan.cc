@@ -151,6 +151,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                delta       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_effective_fraction_overburden"),
                tlftw       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_log_factor_transportable_water"),
                max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio"),
+               K1          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor"),
+               K2          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor"),
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity");
 
@@ -217,8 +219,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
        if (hydroEvan) {
 
          // sliding multipliers used by Arnold and Sharp (2002)
-         double K1 = 6.3376e-6;
-         double K2 = 400.0;
+ //        double K1 = 6.3376e-6;
+ //        double K2 = 400.0;
 
 
          // based on equation A.4 in Arnold and Sharp (2002)

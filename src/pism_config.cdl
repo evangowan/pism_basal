@@ -186,10 +186,10 @@ netcdf pism_config {
 
 // added by Evan
 
-    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor = 6.3376e-8;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor = 10.0;
     pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_doc = "sliding factor K1 in Arnold and Sharp flow equation";
     pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_type = "scalar";
-    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_units = "meter^2 second-1 Pascal-1";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor_units = "meter^2 year-1 Pascal-1";
 
 
     pism_config:basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor = 400;

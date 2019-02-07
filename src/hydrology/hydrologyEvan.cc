@@ -724,36 +724,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
-  /*
-    // cheat
-     result(i,j) = 0.0;
-     const double
-      x = m_grid->x(i),
-      y = m_grid->y(j); // hopefully the grid is always square
 
-    // cheat
-      double melt_factor = -log10(surface_elevation(i,j)) / 3.0;
-
-
-      if(melt_factor > 1.0) {
-        melt_factor = 1.0;
-      }
-
-      if(y < -50000.0 && x >= -50000 && x <= 50000.0 && hydro_t > 10000.0 * seconds_in_year) {
-  //     m_melt_rate_local(i,j) = 5.0 / seconds_in_year;
-        m_melt_rate_local(i,j) =  100.*pow(10.0,melt_factor) / seconds_in_year;
-
-      }
-
-      if(y > 50000.0 && x >= -50000 && x <= 50000.0) {
-   //    m_melt_rate_local(i,j) = 0.5 / seconds_in_year;
-
-  //      m_melt_rate_local(i,j) = pow(10.0,melt_factor) / seconds_in_year * 0.25;
-
-      }
-      // end cheat
-
-  */
 
       if (mask.icy(i, j)) {
 
@@ -1497,7 +1468,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Water discharge
         // Arnold and Sharp (2002) assumed the volume water flux was the same through tunnels and cavities
 
-        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
+
+        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) * dx / tunnel_spacing;
+
+//        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
 
 
         // Rothleisburger tunnel radius

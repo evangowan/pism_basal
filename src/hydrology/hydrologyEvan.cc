@@ -1427,13 +1427,17 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     try {
 
 
-      IceModelVec::AccessList list{&m_pressure_temp, &temp_thk};
+      IceModelVec::AccessList list{&m_pressure_temp, &temp_thk, &m_total_input_ghosts, &mask};
 
 
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();
 
         m_pressure_temp(i,j) = temp_thk(i,j) * rho_i * g;
+
+        if( ! mask.grounded(i,j) ) {
+          m_total_input_ghosts(i,j) = 0.0;
+        }
 
       }
     } catch (...) {

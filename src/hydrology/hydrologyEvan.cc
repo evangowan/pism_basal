@@ -1469,7 +1469,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Arnold and Sharp (2002) assumed the volume water flux was the same through tunnels and cavities
 
 
-        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) * dx / tunnel_spacing;
+        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) * tunnel_spacing / dx ;
 
 //        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
 

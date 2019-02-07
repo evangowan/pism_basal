@@ -174,7 +174,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
   m_log->message(2,
              "* calculating basal strength for each cell ...\n");
-
+  double seconds_in_year = 365.0*24.0*3600.0;
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
@@ -230,7 +230,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
          double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
 
-         double yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1;
+         double yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year;
 
 //  m_log->message(2,
 //             "* %i %i %f %f %i\n", i, j, m_basal_yield_stress(i, j), yield_stress_hydrology, yield_stress_hydrology < m_basal_yield_stress(i, j));

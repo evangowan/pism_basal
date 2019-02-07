@@ -726,7 +726,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
 
 
-      if (mask.icy(i, j)) {
+      if (mask.grounded_ice(i, j)) {
 
   //      if( m_bmelt_local(i,j) < 0.1 / seconds_in_year) {
           result(i,j) = (use_const) ? const_bmelt : m_bmelt_local(i,j); // get the melt water from the base

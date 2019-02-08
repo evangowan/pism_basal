@@ -864,7 +864,7 @@ netcdf pism_config {
     pism_config:hydrology.channel_flow_constant_doc = "empirical constant related to turbulent channel flow";
     pism_config:hydrology.channel_flow_constant_option = "hydrology_channel_flow_constant";
     pism_config:hydrology.channel_flow_constant_type = "scalar";
-    pism_config:hydrology.channel_flow_constant_units = "meter^{8/3}";
+    pism_config:hydrology.channel_flow_constant_units = "meter^{-8/3}";
 
     pism_config:hydrology.bedrock_wavelength = 5.0;
     pism_config:hydrology.bedrock_wavelength_doc = "bedrock bump amplitude";

@@ -1481,9 +1481,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // Rothleisburger tunnel radius
         // equation A.10 from Arnold and Sharp (2002)
 
-        if(m_surface_gradient(i,j) > 1.0e-8) {
+        if(m_hydro_gradient(i,j) > 1.0e-8) {
 
-          m_tunnel_cross_section(i,j) = pow(channel_flow_constant * pow(m_volume_water_flux(i,j),2.0) / (rho_w * g * m_surface_gradient(i,j)), 3.0/8.0);
+          m_tunnel_cross_section(i,j) = pow(channel_flow_constant * pow(m_volume_water_flux(i,j),2.0) / (rho_w * g * m_hydro_gradient(i,j)), 3.0/8.0);
 
 
         } else{
@@ -1496,7 +1496,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         double effective_pressure_tunnel;
         if(m_total_input_ghosts(i,j) > 1.0e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-          effective_pressure_tunnel = pow( (rho_w * g * m_surface_gradient(i,j) * m_volume_water_flux(i,j)) /
+          effective_pressure_tunnel = pow( (rho_w * g * m_hydro_gradient(i,j) * m_volume_water_flux(i,j)) /
                                              (rho_i * arrhenius_parameter * latent_heat * m_tunnel_cross_section(i,j)), (1.0 / Glen_exponent));
         } else {
           effective_pressure_tunnel = m_pressure_temp(i,j);
@@ -1517,7 +1517,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
         if(m_total_input_ghosts(i,j) > 1e-12 &&  m_tunnel_cross_section(i,j) > 1.0e-8) {
-          effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_surface_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) *
+          effective_pressure_cavity = shadowing_function * pow((  (rho_w * g * m_hydro_gradient(i,j)) / (rho_i * arrhenius_parameter * latent_heat) *
                                                                   ( m_volume_water_flux(i,j) / (number_of_cavities * cavity_area) ) ), (1.0 / Glen_exponent));
         } else {
           effective_pressure_cavity = m_pressure_temp(i,j);

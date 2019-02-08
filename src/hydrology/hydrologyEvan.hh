@@ -54,6 +54,7 @@ public:
   virtual void bed_gradient(IceModelVec2V &result);
   virtual void get_EffectivePressure(IceModelVec2S &result);
 
+  virtual void update_velbase_mag(IceModelVec2S &result);
 protected:
 
   virtual void get_input_rate(double hydro_t, double hydro_dt, IceModelVec2S &result);
@@ -62,7 +63,6 @@ protected:
   virtual void update_impl(double icet, double icedt);
 
 
-  virtual void update_velbase_mag(IceModelVec2S &result);
   virtual void update_surface_runoff(IceModelVec2S &result);
 
 

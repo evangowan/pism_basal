@@ -87,6 +87,14 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
                  "1", "");
 
 
+
+  m_velocity_temp.create(m_grid, "velocity_temp",
+              WITHOUT_GHOSTS);
+  m_velocity_temp.set_attrs("internal",
+                 "copy of velocity from the hydrology model",
+                 "m s-1", "");
+
+
 }
 
 MohrCoulombYieldStressEvan::~MohrCoulombYieldStressEvan() {
@@ -154,7 +162,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                K1          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor"),
                K2          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor"),
                rho_i = m_config->get_double("constants.ice.density"),
-               g = m_config->get_double("constants.standard_gravity");
+               g = m_config->get_double("constants.standard_gravity"),
+               q = m_config->get_double("basal_resistance.pseudo_plastic.q");
+        double u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold");
 
 
 
@@ -162,19 +172,22 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
   const IceModelVec2S        &bed_topography = inputs.geometry->bed_elevation;
 
   IceModelVec::AccessList list{&m_tillwat, &m_till_phi, &m_basal_yield_stress, &mask,
-      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism};
+      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism, &m_velocity_temp};
 
   if (hydroEvan) {
     hydroEvan->till_water_thickness(m_tillwat);
     hydroEvan->overburden_pressure(m_Po);
     hydroEvan->get_EffectivePressure(m_effective_pressure);
     hydroEvan->get_SedimentDistribution(m_till_cover_local);
+    hydroEvan->update_velbase_mag(m_velocity_temp);
 
   }
 
   m_log->message(2,
              "* calculating basal strength for each cell ...\n");
   double seconds_in_year = 365.0*24.0*3600.0;
+
+  u_threshold = u_threshold / seconds_in_year; // got to put this into m/s
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
@@ -230,7 +243,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
          double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
 
-         double yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year;
+         double yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
 
 //  m_log->message(2,
 //             "* %i %i %f %f %i\n", i, j, m_basal_yield_stress(i, j), yield_stress_hydrology, yield_stress_hydrology < m_basal_yield_stress(i, j));

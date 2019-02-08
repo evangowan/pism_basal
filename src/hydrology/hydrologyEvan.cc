@@ -1458,7 +1458,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     ParallelSection loop(m_grid->com);
     try {
 
-      IceModelVec::AccessList list{&m_surface_gradient, &m_surface_gradient_dir, &m_volume_water_flux, &m_total_input_ghosts, &m_tunnel_cross_section, &m_pressure_temp, &m_velbase_mag, &m_hydrology_effective_pressure, &m_hydrology_fraction_overburden, &mask, &m_hydrosystem};
+      IceModelVec::AccessList list{&m_surface_gradient, &m_surface_gradient_dir, &m_volume_water_flux, &m_total_input_ghosts, &m_tunnel_cross_section, &m_pressure_temp, &m_velbase_mag, &m_hydrology_effective_pressure, &m_hydrology_fraction_overburden, &mask, &m_hydrosystem, &m_hydro_gradient};
 
 //  m_log->message(2,
 //             "* Hydrology loop ...\n");

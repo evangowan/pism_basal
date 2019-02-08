@@ -242,8 +242,13 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          // was not converted to the correct units.
 
          double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
-
-         double yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
+         double yield_stress_hydrology;
+         if (m_velocity_temp(i,j) > 0.0) {
+           yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
+         } else {
+           yield_stress_hydrology = high_tauc; // to prevent errors
+         }
+           
 
 //  m_log->message(2,
 //             "* %i %i %f %f %i\n", i, j, m_basal_yield_stress(i, j), yield_stress_hydrology, yield_stress_hydrology < m_basal_yield_stress(i, j));

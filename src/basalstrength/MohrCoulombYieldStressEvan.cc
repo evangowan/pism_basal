@@ -164,7 +164,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity"),
                q = m_config->get_double("basal_resistance.pseudo_plastic.q");
-        double u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold");
+        double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
 
 
@@ -186,8 +186,6 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
   m_log->message(2,
              "* calculating basal strength for each cell ...\n");
   double seconds_in_year = 365.0*24.0*3600.0;
-
-  u_threshold = u_threshold / seconds_in_year; // got to put this into m/s
 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
@@ -220,8 +218,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
         m_basal_yield_stress(i, j) = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
 
 
-//  m_log->message(2, 
-//             "* %i %i %f ...\n", i, j, m_basal_yield_stress(i, j));
+  m_log->message(2, 
+             "* %i %i %f ...\n", i, j, m_velocity_temp(i, j));
 
        // take into account sediment free areas
 
@@ -244,7 +242,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
          double yield_stress_hydrology;
          if (m_velocity_temp(i,j) > 0.0) {
-           yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
+           yield_stress_hydrology = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
          } else {
            yield_stress_hydrology = high_tauc; // to prevent errors
          }

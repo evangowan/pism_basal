@@ -1542,12 +1542,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         } else if(tunnel_stability < critical_stability) { // tunnels are stable, so take that as the effective pressure
 
-          m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j) - effective_pressure_tunnel;
+          m_hydrology_effective_pressure(i,j) =  effective_pressure_tunnel;
           m_hydrosystem(i,j) = 1.;
 
         } else { // cavity system
 
-          m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j) - effective_pressure_cavity;
+          m_hydrology_effective_pressure(i,j) =  effective_pressure_cavity;
           m_hydrosystem(i,j) = 2.;
 
         }

@@ -292,9 +292,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 */
          // if the ice base is weaker than the sediments
          if (yield_stress_hydrology < m_basal_yield_stress(i, j)) {
-		// comment out for now
-         //  m_basal_yield_stress(i, j) = yield_stress_hydrology;
-      //     m_sliding_mechanism(i,j) = 2;
+
+           m_basal_yield_stress(i, j) = yield_stress_hydrology;
+           m_sliding_mechanism(i,j) = 2;
          }
 
 

@@ -51,7 +51,7 @@ protected:
 //  IceModelVec2S m_till_phi, m_tillwat, m_Po;
   hydrology::Hydrology *m_hydrology;
 
-  IceModelVec2S m_effective_pressure, m_till_cover_local, m_sliding_mechanism, m_velocity_temp;
+  IceModelVec2S m_effective_pressure, m_till_cover_local, m_sliding_mechanism, m_velocity_temp, hydro_tauc;
 };
 
 } // end of namespace pism

@@ -180,9 +180,10 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
   const IceModelVec2CellType &mask           = inputs.geometry->cell_type;
   const IceModelVec2S        &bed_topography = inputs.geometry->bed_elevation;
+  const IceModelVec2S        &temp_thk = *m_grid->variables().get_2d_scalar("thk");
 
   IceModelVec::AccessList list{&m_tillwat, &m_till_phi, &m_basal_yield_stress, &mask,
-      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism, &m_velocity_temp, &hydro_tauc};
+      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism, &m_velocity_temp, &hydro_tauc, &temp_thk};
 
   if (hydroEvan) {
     hydroEvan->till_water_thickness(m_tillwat);
@@ -264,7 +265,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
 //           yield_stress_hydrology2 = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
 
-           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
+           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)) * temp_thk(i,j);
 //           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override);
 
 //           yield_stress_hydrology3 = (m_effective_pressure(i,j) + K1_override * pow(m_effective_pressure(i,j),2) ) / K2_override;

@@ -1564,13 +1564,15 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double psi_exponent = -1.0 / (2.0 * alpha);
 
         double effective_pressure_temp;
-        if(m_total_input_ghosts(i,j) <= 1e-12) { // essentially no water available
+
+        m_hydrosystem(i,j) = 0.;
+        if(m_volume_water_flux(i,j) <= 1e-12) { // essentially no water available
 
           effective_pressure_temp = m_pressure_temp(i,j);
 
           m_hydrosystem(i,j) = 0.;
         } else {
-          double effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag(i,j) * protrusion_height ) /
+          effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag(i,j) * protrusion_height ) /
                                          ( c2 * pow(c3, -1.0 / alpha) * pow(m_volume_water_flux(i,j), 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
                                          , (1.0/Glen_exponent));
 

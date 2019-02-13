@@ -1552,14 +1552,43 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         }
 
+        // let us instead use Schoof's parameterization
+
+        double c1 = 1.0 / (rho_i * latent_heat);
+        double c2 = 2.0 * arrhenius_parameter * pow(Glen_exponent,-Glen_exponent);
+        double pi = 3.14159265359;
+        double f = 0.1;
+        double c3 = pow(2.0,(1.0/4.0)) * pow(pi+2.0,(1/2)) / (pow(pi,(1/4)) * pow(rho_w*f,(1/2)));
+        double alpha = 5.0/4.0;
+        double protrusion_height = 0.5;
+        double psi_exponent = -1.0 / (2.0 * alpha);
+
+        double effective_pressure_temp;
+        if(m_total_input_ghosts(i,j) <= 1e-12) { // essentially no water available
+
+          effective_pressure_temp = m_pressure_temp(i,j);
+
+          m_hydrosystem(i,j) = 0.;
+        } else {
+          double effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag(i,j) * protrusion_height ) /
+                                         ( c2 * pow(c3, -1.0 / alpha) * pow(m_volume_water_flux(i,j), 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
+                                         , (1.0/Glen_exponent));
+
+          m_hydrosystem(i,j) = 1.;
+
+        }
+
+        m_hydrology_effective_pressure(i,j) = effective_pressure_temp;
         if (m_hydrology_effective_pressure(i,j) > m_pressure_temp(i,j)) {
           m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
+          m_hydrosystem(i,j) = 2.;
         }
 
 
 
         if(mask.grounded_ice(i,j) && m_hydrology_effective_pressure(i,j) < 0.01 * m_pressure_temp(i,j)) {
          m_hydrology_effective_pressure(i,j) = 0.01 * m_pressure_temp(i,j);
+         m_hydrosystem(i,j) = 3.;
         }
 
         if(m_pressure_temp(i,j) > 0.0) {

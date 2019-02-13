@@ -234,7 +234,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
        // take into account sediment free areas
 
-       m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * m_till_cover_local(i, j) + high_tauc * (1.0 - m_till_cover_local(i, j));
+       m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * m_till_cover_local(i, j) + temp_thk(i,j) * g * rho_i * (1.0 - m_till_cover_local(i, j));
 
        m_sliding_mechanism(i,j) = 1;
 

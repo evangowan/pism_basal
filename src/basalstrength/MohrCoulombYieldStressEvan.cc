@@ -257,19 +257,17 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
          double yield_stress_hydrology;
 
-  m_log->message(2, 
-             "* %i %i %f %f ...\n", i, j, Ntil, m_effective_pressure(i,j));
+//  m_log->message(2, 
+//             "* %i %i %f %f ...\n", i, j, Ntil, m_effective_pressure(i,j));
 
          if (m_velocity_temp(i,j) > 0.0) {
 
 
-//           yield_stress_hydrology2 = (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
 
-           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
-//           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override);
+ //          yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
+           yield_stress_hydrology = m_effective_pressure(i,j);
 
-//           yield_stress_hydrology3 = (m_effective_pressure(i,j) + K1_override * pow(m_effective_pressure(i,j),2) ) / K2_override;
-//           yield_stress_hydrology4 = (z_star) / K1  * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q)); // have to put in the u_threshold part to balance the equation
+
          } else {
            yield_stress_hydrology = high_tauc; // to prevent errors
 //		yield_stress_hydrology2 = high_tauc;
@@ -293,8 +291,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          // if the ice base is weaker than the sediments
          if (yield_stress_hydrology < m_basal_yield_stress(i, j)) {
 
-           m_basal_yield_stress(i, j) = yield_stress_hydrology;
-           m_sliding_mechanism(i,j) = 2;
+ //          m_basal_yield_stress(i, j) = yield_stress_hydrology;
+ //          m_sliding_mechanism(i,j) = 2;
          }
 
 

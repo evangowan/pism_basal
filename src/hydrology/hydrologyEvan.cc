@@ -195,7 +195,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
  m_hydrosystem.create(m_grid, "hydrology_type", WITHOUT_GHOSTS);
  m_hydrosystem.set_attrs("model_state",
-                        "type of hydrology, 1 tunnels 2 cavity",
+                        "type of hydrology, 0 dry 1 tunnels 2 cavity 3 overburden 4 almost floating",
                         "1", "");
  m_hydrosystem.metadata().set_double("valid_min", 0.0);
 
@@ -1560,37 +1560,52 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double f = 0.1;
         double c3 = pow(2.0,(1.0/4.0)) * pow(pi+2.0,(1/2)) / (pow(pi,(1/4)) * pow(rho_w*f,(1/2)));
         double alpha = 5.0/4.0;
-        double protrusion_height = 0.5;
+        double protrusion_height = 0.1;
         double psi_exponent = -1.0 / (2.0 * alpha);
+
+        double channel_spacing = 12000; // in m, roughly the average spacing of eskers on the Canadian Shield, see Storrar et al 2014
 
         double effective_pressure_temp;
 
+        // equation 3 in Schoof 2010
+        double Qc = m_velbase_mag(i,j) * protrusion_height / (c1 * (alpha-1.0) * m_hydro_gradient(i,j));
+
+        double drainage_volume_water_flux = m_volume_water_flux(i,j) * channel_spacing / dx;
+
+
         m_hydrosystem(i,j) = 0.;
-        if(m_volume_water_flux(i,j) <= 1e-12) { // essentially no water available
+        if(drainage_volume_water_flux <= 1e-12) { // essentially no water available
 
           effective_pressure_temp = m_pressure_temp(i,j);
 
           m_hydrosystem(i,j) = 0.;
         } else {
-          effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag(i,j) * protrusion_height ) /
-                                         ( c2 * pow(c3, -1.0 / alpha) * pow(m_volume_water_flux(i,j), 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
+
+          // equation 2 in Schoof 2010
+          effective_pressure_temp = pow(( c1 * drainage_volume_water_flux * m_hydro_gradient(i,j) + m_velbase_mag(i,j) * protrusion_height ) /
+                                         ( c2 * pow(c3, -1.0 / alpha) * pow(drainage_volume_water_flux, 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
                                          , (1.0/Glen_exponent));
 
-          m_hydrosystem(i,j) = 1.;
+
+          if(drainage_volume_water_flux > Qc) {
+             m_hydrosystem(i,j) = 1.; // tunnels
+          } else {
+             m_hydrosystem(i,j) = 2.; // cavities
+          }
 
         }
 
         m_hydrology_effective_pressure(i,j) = effective_pressure_temp;
         if (m_hydrology_effective_pressure(i,j) > m_pressure_temp(i,j)) {
           m_hydrology_effective_pressure(i,j) = m_pressure_temp(i,j);
-          m_hydrosystem(i,j) = 2.;
+          m_hydrosystem(i,j) = 3.;
         }
 
 
 
         if(mask.grounded_ice(i,j) && m_hydrology_effective_pressure(i,j) < 0.01 * m_pressure_temp(i,j)) {
          m_hydrology_effective_pressure(i,j) = 0.01 * m_pressure_temp(i,j);
-         m_hydrosystem(i,j) = 3.;
+         m_hydrosystem(i,j) = 4.;
         }
 
         if(m_pressure_temp(i,j) > 0.0) {

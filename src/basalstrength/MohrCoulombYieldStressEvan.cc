@@ -77,7 +77,7 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
 
   m_sliding_mechanism.create(m_grid, "sliding_mechanism", WITHOUT_GHOSTS);
   m_sliding_mechanism.set_attrs("internal",
-                       "0 for no sliding (i.e. ice free), 1 for sediment deformation, 2 for hydrological influence flow",
+                       "0 for no sliding (i.e. ice free), 1 for sediment deformation, 2 for hydrology, 3 for slippery grounding line",
                        "1", "");
 
   m_till_cover_local.create(m_grid, "tillcover_local",
@@ -176,7 +176,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                q = m_config->get_double("basal_resistance.pseudo_plastic.q");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
-
+        double grounding_reduction = 0.001; // makes things really slippery
 
   const IceModelVec2CellType &mask           = inputs.geometry->cell_type;
   const IceModelVec2S        &bed_topography = inputs.geometry->bed_elevation;
@@ -198,11 +198,15 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
              "* calculating basal strength for each cell ...\n");
   double seconds_in_year = 365.0*24.0*3600.0;
 
+
+ 
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
 
 //  m_log->message(2,
 //             "* %i %i %f %i %i %f\n", i, j, m_basal_yield_stress(i, j), mask.ocean(i, j), mask.ice_free(i, j), m_tillwat(i,j));
+
+    double slippery_tauc = high_tauc;
 
     if (mask.ocean(i, j)) {
 
@@ -220,6 +224,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
           bed_topography(i,j) <= sea_level and
           (mask.next_to_floating_ice(i,j) or mask.next_to_ice_free_ocean(i,j))) {
         water = tillwat_max;
+        slippery_tauc = temp_thk(i,j) * g * rho_i * grounding_reduction;
       }
       double
         s    = water / tillwat_max,
@@ -295,6 +300,13 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
            m_sliding_mechanism(i,j) = 2;
          }
 
+
+        if(slippery_tauc < m_basal_yield_stress(i, j)) {
+
+           m_basal_yield_stress(i, j) = slippery_tauc;
+           m_sliding_mechanism(i,j) = 3;
+
+        }
 
 
        }

@@ -224,6 +224,15 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
           bed_topography(i,j) <= sea_level and
           (mask.next_to_floating_ice(i,j) or mask.next_to_ice_free_ocean(i,j))) {
         water = tillwat_max;
+        // make the reduction in tau_c be dependent on basal topography
+        if(bed_topography(i,j) >= -1000.) {
+          grounding_reduction = bed_topography(i,j) * 1.0e-5 + 0.2; // range from 0.02 to 0.01 times the overburden
+        } else if (bed_topography(i,j) >= -2000. && bed_topography(i,j) < -1000.) {
+          grounding_reduction = bed_topography(i,j) * 9.0e-6 + 0.019; // range from 0.01 to 0.001 times the overburden
+        } else {
+          grounding_reduction = 0.001; // set to 0.001 times the overburden
+        }
+
         slippery_tauc = temp_thk(i,j) * g * rho_i * grounding_reduction;
       }
       double

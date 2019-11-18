@@ -173,7 +173,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                K2          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor"),
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity"),
-               q = m_config->get_double("basal_resistance.pseudo_plastic.q");
+               q = m_config->get_double("basal_resistance.pseudo_plastic.q"),
+               hydrology_sliding_enhancement = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
         double grounding_reduction = 0.001; // makes things really slippery
@@ -279,7 +280,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
 
  //          yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
-           yield_stress_hydrology = m_effective_pressure(i,j);
+           yield_stress_hydrology = m_effective_pressure(i,j) * (hydrology_sliding_enhancement / m_till_cover_local(i, j)) ;
 
 
          } else {

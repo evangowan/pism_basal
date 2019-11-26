@@ -269,7 +269,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          // used value of "ice thickness above buoyancy". The values of K1 and K2 were designed for this, and the Arnold and Sharp equation used a value of K2 which
          // was not converted to the correct units.
 
-         double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
+//         double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
+         double z_star = m_effective_pressure(i,j) / (rho_i * g)* hydrology_sliding_enhancement *(2.0-m_till_cover_local(i, j));
          double yield_stress_hydrology;
 
 //  m_log->message(2, 
@@ -279,8 +280,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
 
 
- //          yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
-           yield_stress_hydrology = m_effective_pressure(i,j) * (hydrology_sliding_enhancement / m_till_cover_local(i, j)) ;
+           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
+ //          yield_stress_hydrology = m_effective_pressure(i,j) * (hydrology_sliding_enhancement / m_till_cover_local(i, j)) ;
 
 
          } else {

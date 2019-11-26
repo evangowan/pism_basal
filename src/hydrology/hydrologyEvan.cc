@@ -126,12 +126,12 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "1", "");
 
 
-  m_surface_elevation_temp.create(m_grid, "surface_elevation_temp", WITH_GHOSTS, stencil_width);
+  m_surface_elevation_temp.create(m_grid, "surface_elevation_temp", WITH_GHOSTS, 2);
   m_surface_elevation_temp.set_attrs("model_state",
                        "temporary surface_elevation",
                        "m", "");
 
-  m_bed_elevation_temp.create(m_grid, "bed_elevation_temp", WITH_GHOSTS, stencil_width);
+  m_bed_elevation_temp.create(m_grid, "bed_elevation_temp", WITH_GHOSTS, 2);
   m_bed_elevation_temp.set_attrs("model_state",
                        "temporary bed_elevation",
                        "m", "");
@@ -494,38 +494,54 @@ void hydrologyEvan::surface_gradient(IceModelVec2V &result) {
   m_surface_elevation_temp.copy_from(surface_elevation);
   m_surface_elevation_temp.update_ghosts();
 
+
+//  m_log->message(2,
+//             "* starting hydrologyEvan::surface_gradient ...\n");
+
   ParallelSection loop(m_grid->com);
   try {
-
-    double point_store[3][3];
+    int gradient_grid_width = 5;
+    double point_store3[3][3];
+    double point_store5[5][5];
     double u, v;
-    int i_low, i_high, j_low, j_high;
+    int i_check, j_check;
 
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
 
 
+      for (int k=0; k < gradient_grid_width; k++) {
+        for (int l=0; l < gradient_grid_width; l++) {
+
+         i_check = i + k - ((gradient_grid_width-1)/2);
+         i_check = low_check(i_check);
+         i_check = high_i_check(i_check);     
+
+         j_check = j + l - ((gradient_grid_width-1)/2);
+         j_check = low_check(j_check);
+         j_check = high_j_check(j_check); 
 
 
-      i_high = high_i_check(i);
-      i_low = low_check(i);
+         if (k > 0 && k < 4 && l > 0 && l < 4) {
 
-      j_high = high_j_check(j);
-      j_low = low_check(j);
+           point_store3[k-1][l-1] = m_surface_elevation_temp(i_check,j_check);
+         }
 
+         point_store5[k][l] = m_surface_elevation_temp(i_check,j_check);
 
-      point_store[0][0] = m_surface_elevation_temp(i_low,j_low);
-      point_store[0][1] = m_surface_elevation_temp(i_low,j);
-      point_store[0][2] = m_surface_elevation_temp(i_low,j_high);
-      point_store[1][0] = m_surface_elevation_temp(i,j_low);
-      point_store[1][1] = m_surface_elevation_temp(i,j); // this one should be safe without a check
-      point_store[1][2] = m_surface_elevation_temp(i,j_high);
-      point_store[2][0] = m_surface_elevation_temp(i_high,j_low);
-      point_store[2][1] = m_surface_elevation_temp(i_high,j);
-      point_store[2][2] = m_surface_elevation_temp(i_high,j_high);
+        }
+      }
 
-      finite_difference(point_store, u, v);
+//  m_log->message(2,
+//             "* calling gradient calculation ...\n");
+      if(gradient_grid_width == 3) {
+        finite_difference(point_store3, u, v);
+      } else {
+
+        gradient_five_point(point_store5, u, v);
+
+      }
       result(i,j).u = u;
       result(i,j).v = v;
 
@@ -555,36 +571,52 @@ void hydrologyEvan::bed_gradient(IceModelVec2V &result) {
   m_bed_elevation_temp.copy_from(bed_elevation);
   m_bed_elevation_temp.update_ghosts();
 
+
+
+//  m_log->message(2,
+//             "* starting hydrologyEvan::bed_gradient ...\n");
+
   ParallelSection loop(m_grid->com);
   try {
-    double point_store[3][3];
+    int gradient_grid_width = 5;
+    double point_store3[3][3];
+    double point_store5[5][5];
     double u, v;
-    int i_low, i_high, j_low, j_high;
+    int i_check, j_check;
 
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
 
 
-      i_high = high_i_check(i);
-      i_low = low_check(i);
+      for (int k=0; k < gradient_grid_width; k++) {
+        for (int l=0; l < gradient_grid_width; l++) {
 
-      j_high = high_j_check(j);
-      j_low = low_check(j);
+         i_check = i + k - ((gradient_grid_width-1)/2);
+         i_check = low_check(i_check);
+         i_check = high_i_check(i_check);     
 
+         j_check = j + l - ((gradient_grid_width-1)/2);
+         j_check = low_check(j_check);
+         j_check = high_j_check(j_check); 
 
-      point_store[0][0] = m_bed_elevation_temp(i_low,j_low);
-      point_store[0][1] = m_bed_elevation_temp(i_low,j);
-      point_store[0][2] = m_bed_elevation_temp(i_low,j_high);
-      point_store[1][0] = m_bed_elevation_temp(i,j_low);
-      point_store[1][1] = m_bed_elevation_temp(i,j); // this one should be safe without a check
-      point_store[1][2] = m_bed_elevation_temp(i,j_high);
-      point_store[2][0] = m_bed_elevation_temp(i_high,j_low);
-      point_store[2][1] = m_bed_elevation_temp(i_high,j);
-      point_store[2][2] = m_bed_elevation_temp(i_high,j_high);
+         if (k > 0 && k < 4 && l > 0 && l < 4) {
 
-      finite_difference(point_store, u, v);
+           point_store3[k-1][l-1] = m_bed_elevation_temp(i_check,j_check);
+         }
 
+         point_store5[k][l] = m_bed_elevation_temp(i_check,j_check);
+
+        }
+      }
+
+      if(gradient_grid_width == 3) {
+        finite_difference(point_store3, u, v);
+      } else {
+
+        gradient_five_point(point_store5, u, v);
+
+      }
       result(i,j).u = u;
       result(i,j).v = v;
 
@@ -601,10 +633,10 @@ int hydrologyEvan::high_i_check(int i) {
   int i_high;
 
 
-  if(i+1 >= num_i) {
-    i_high = i;
+  if(i >= num_i) {
+    i_high = num_i;
   } else {
-    i_high = i + 1;
+    i_high = i;
   }
 
   return i_high;
@@ -616,10 +648,10 @@ int hydrologyEvan::high_j_check(int j) {
   int j_high;
 
 
-  if(j+1 >= num_j) {
-    j_high = j;
+  if(j >= num_j) {
+    j_high = num_j;
   } else {
-    j_high = j + 1;
+    j_high = j;
   }
 
   return j_high;
@@ -628,10 +660,10 @@ int hydrologyEvan::high_j_check(int j) {
 int hydrologyEvan::low_check(int i) {
 
   int i_low;
-      if(i-1 < 0) {
-        i_low = i;
+      if(i < 0) {
+        i_low = 0;
       } else {
-        i_low = i - 1;
+        i_low = i;
       }
   return i_low;
 
@@ -650,6 +682,180 @@ void hydrologyEvan::finite_difference(double point_array[3][3], double& u, doubl
 
   v = ((point_array[2][2] + 2.0 * point_array[1][2] + point_array[0][2]) -
 			      (point_array[2][0] + 2.0 * point_array[1][0] + point_array[0][0])) / (8.0 * dy);
+
+}
+
+
+void hydrologyEvan::gradient_five_point(double point_array[5][5], double& u, double& v) {
+
+  // find the gradient via least squares
+
+  const double
+    dx = m_grid->dx(),
+    dy = m_grid->dy();
+
+  int array_size = 5;
+  int array_size_squared = array_size*array_size;
+  int plane_variables = 3;
+  int half_array = (5-1) / 2;
+
+  double B_matrix[array_size_squared];
+  double R_T_R[plane_variables][plane_variables];
+  double R[array_size_squared][plane_variables];
+  double R_T[plane_variables][array_size_squared];
+  double R_T_R_inverse[plane_variables][plane_variables];
+
+  double R_T_R_inverse_R_T[plane_variables][array_size_squared];
+
+  double plane_solution[plane_variables];
+
+
+
+//  m_log->message(2,
+//             "* starting hydrologyEvan::gradient_five_point ... %i\n", array_size);
+
+  // create R and R transpose arrays, and B_matrix
+  int counter = 0;
+  for (int i = 0; i < array_size; i++) {
+    for (int j = 0; j < array_size; j++) {
+
+//  m_log->message(2,
+//             "* create R and R transpose arrays, and B_matrix %i %i %i\n", i, j, counter);
+      R[counter][0] = 1;
+      R[counter][1] = double(i-half_array)*dx;
+      R[counter][2] = double(j-half_array)*dy;
+
+      R_T[0][counter] = R[counter][0];
+      R_T[1][counter] = R[counter][1];
+      R_T[2][counter] = R[counter][2];
+
+      B_matrix[counter] = point_array[i][j];
+
+      counter++;
+    }
+  }
+
+//  m_log->message(2,
+//             "* create R and R transpose arrays, and B_matrix ...\n");
+  // multiply R transpose and R
+
+
+  for (int i = 0; i < plane_variables; i++) {
+    for (int j = 0; j < plane_variables; j++) {
+
+      double temp_storage = 0;
+
+       for (int k = 0; k < array_size_squared; k++) {
+
+         temp_storage = temp_storage + R_T[i][k] * R[k][j];
+
+       }
+
+       R_T_R[i][j] = temp_storage; 
+
+    }
+  }
+
+
+
+  // find the inverse of the R_T_R matrix
+
+  double det_R_T_R;
+  {
+    double a = R_T_R[0][0];
+    double b = R_T_R[1][0];
+    double c = R_T_R[2][0];
+    double d = R_T_R[0][1];
+    double e = R_T_R[1][1];
+    double f = R_T_R[2][1];
+    double g = R_T_R[0][2];
+    double h = R_T_R[1][2];
+    double i = R_T_R[2][2];
+
+
+
+    R_T_R_inverse[0][0] = e * i - f * h;      // A
+    R_T_R_inverse[0][1] = -(d * i - f * g);  // B
+    R_T_R_inverse[0][2] = d * h - e * g;      // C
+    R_T_R_inverse[1][0] = -(b * i - c * h);  // D
+    R_T_R_inverse[1][1] = a * i - c * g;      // E
+    R_T_R_inverse[1][2] = -( a * h - b * g);  // F
+    R_T_R_inverse[2][0] = b * f - c * e;      // G
+    R_T_R_inverse[2][1] = -( a * f - c * d);  // H
+    R_T_R_inverse[2][2] = a * e - b * d;      // I
+
+  // Rule of Sarrus for finding the determinant of a 3x3 matrix
+    det_R_T_R = a * R_T_R_inverse[0][0] + b * R_T_R_inverse[0][1] + c * R_T_R_inverse[0][2];
+
+  }
+
+
+
+
+  // shouldn't need to check of the determinant is zero, because they are coordinates of a grid
+
+
+  for (int i = 0; i < plane_variables; i++) {
+    for (int j = 0; j < plane_variables; j++) {
+
+      double before = R_T_R_inverse[i][j];
+      R_T_R_inverse[i][j] = R_T_R_inverse[i][j] / det_R_T_R;
+
+ // m_log->message(2,
+ //           "*  hydrologyEvan::gradient_five_point ... %i %i %f %f %f\n", i, j, before, det_R_T_R, R_T_R_inverse[i][j]);
+
+    }
+
+//  m_log->message(2,
+//           "*  hydrologyEvan::gradient_five_point before ... %i  %f %f %f\n", i,  R_T_R_inverse[i][0],  R_T_R_inverse[i][1],  R_T_R_inverse[i][2]);
+  }
+
+
+  // Multiply R_T_R_inverse_R by R_t
+
+  for (int i = 0; i < plane_variables; i++) {
+    for (int k = 0; k < array_size_squared; k++) {
+    
+
+      double temp_storage = 0;
+
+      for (int j = 0; j < plane_variables; j++) {
+
+         temp_storage = temp_storage + R_T_R_inverse[i][j] * R_T[j][k] ;
+
+      }
+
+      R_T_R_inverse_R_T[i][k] = temp_storage; 
+
+    }
+  }
+
+  // find the variables for the equation of a plane
+
+  for (int i = 0; i < plane_variables; i++) {
+    double temp_storage = 0;
+    for (int k = 0; k < array_size_squared; k++) {
+    
+         temp_storage = temp_storage + R_T_R_inverse_R_T[i][k] * B_matrix[k] ;
+
+        if(B_matrix[k] > 0.00) {
+//  m_log->message(2,
+//            "*  hydrologyEvan::gradient_five_point ... %f %f\n", R_T_R_inverse_R_R_T[i][k], B_matrix[k]);
+         }
+    }
+
+    plane_solution[i] = temp_storage; 
+
+
+  }
+
+  // finally, output the gradient
+
+  u = plane_solution[1];
+  v = plane_solution[2];
+
+//  m_log->message(2,
+//            "* ending hydrologyEvan::gradient_five_point ... %f %f\n", u, v);
 
 }
 
@@ -710,14 +916,17 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   } else {
 //  m_log->message(2,
 //             "* Surface model not detected\n");
-    m_melt_rate_local.set(0.0);
+    m_melt_rate_local.set(0.0); // uncomment when not debugging
 
   }
   // cheat
 
- //   m_melt_rate_local.set(5.0);
-
+  m_log->message(2,
+             "* hydrologyEvan:: cheating");
   double seconds_in_year = 365.0*24.0*3600.0;
+    m_melt_rate_local.set(0.05/seconds_in_year);
+
+
 
   ParallelSection loop(m_grid->com);
   try {

@@ -201,6 +201,7 @@ netcdf pism_config {
     pism_config:basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement = 0.1;
     pism_config:basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement_doc = "scaling factor to effective pressure calculated from hydrology routine to create sliding law";
     pism_config:basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement_type = "scalar";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement_option = "hydrology_sliding_enhancement";
     pism_config:basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement_units = "pure number";
 
 

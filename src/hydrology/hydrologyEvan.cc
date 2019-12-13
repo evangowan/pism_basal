@@ -1485,7 +1485,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           if (found_first) {
 
 
-            if (gradient_storage[lowest_processor][lowest_index] > 1e-9) { // distribute water
+            if (gradient_storage[lowest_processor][lowest_index] > 1.0) { // distribute water if the gradient is significant enough
 
               int index = serial_permutation[lowest_processor][lowest_index];
 
@@ -1626,8 +1626,131 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
                                                               + water_store_multiplier[10]*total_input_ghosts_temp_vec[index];
               }
 
-            }
 
+
+/*
+              int max_ind = num_i * num_j;  // ensure that you do not commit segmentation fault
+              int neighbor_index;
+              double fraction_distribute;
+
+              if(direction < -3./4. * pi) { // should go left and downleft
+
+                fraction_distribute = ((-3./4. * pi) - direction ) / (pi/4.);
+
+                neighbor_index =  index - 1; // goes left
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp > 0)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * fraction_distribute;
+                }
+
+                neighbor_index =  index + (-1) + (-1) * num_i; // goes down left
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0) and (i_temp > 0)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              } else if(direction < -1./2. * pi) { // should go downleft and down
+
+                fraction_distribute = ((-1./2. * pi) - direction ) / (pi/4.);
+
+
+                neighbor_index =  index + (-1) + (-1) * num_i; // goes down left
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0) and (i_temp > 0)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * fraction_distribute;
+                }
+
+                neighbor_index =  index +  (-1) * num_i; // goes down
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              } else if(direction < -1./4. * pi) { // should go down and downright
+
+                fraction_distribute = ((-1./4. * pi) - direction ) / (pi/4.);
+
+                neighbor_index =  index +  (-1) * num_i; // goes down
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * fraction_distribute;
+                }
+
+                neighbor_index =  index + (1) + (-1) * num_i; // goes down right
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0) and (i_temp < num_i)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              } else if(direction < 0.) { // should go downright and right
+
+                fraction_distribute = ((0.0) - direction ) / (pi/4.);
+
+                neighbor_index =  index + (1) + (-1) * num_i; // goes down right
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp > 0) and (i_temp < num_i)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * fraction_distribute;
+                }
+
+                neighbor_index =  index + 1; // goes right
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp < num_i)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              } else if(direction < 1./4. * pi) { // should go right and upright
+
+                fraction_distribute = ((1./4. * pi) - direction ) / (pi/4.);
+
+                neighbor_index =  index + 1; // goes right
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp < num_i)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (fraction_distribute);
+                }
+
+                neighbor_index =  index + (1) + (1) * num_i; // goes up right
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp < num_i) and (j_temp < num_j)) {
+                  total_input_ghosts_temp_vec[neighbor_index]  = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              } else if(direction < 1./2. * pi) { // should go upright and up
+
+                fraction_distribute = ((1./2. * pi) - direction ) / (pi/4.);
+
+                neighbor_index =  index + (1) + (1) * num_i; // goes up right
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp < num_i) and (j_temp < num_j)) {
+                  total_input_ghosts_temp_vec[neighbor_index]  = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (fraction_distribute);
+                }
+
+                neighbor_index =  index +  (1) * num_i; // goes up
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp < num_j)) {
+                  total_input_ghosts_temp_vec[neighbor_index]  = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+
+              } else if(direction < 3./4. * pi) { // should up and upleft
+
+                fraction_distribute = ((3./4. * pi) - direction ) / (pi/4.);
+
+                neighbor_index =  index +  (1) * num_i; // goes up
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (j_temp < num_j)) {
+                  total_input_ghosts_temp_vec[neighbor_index]  = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (fraction_distribute);
+                }
+
+                neighbor_index =  index + (-1) + (1) * num_i; // goes up left
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp > 0) and (j_temp < num_j)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              } else  { // should up and upleft
+
+                fraction_distribute = (( pi) - direction ) / (pi/4.);
+
+                neighbor_index =  index + (-1) + (1) * num_i; // goes up left
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp > 0) and (j_temp < num_j)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (fraction_distribute);
+                }
+                neighbor_index =  index - 1; // goes left
+                if ((neighbor_index >= 0) and (neighbor_index < max_ind) and (i_temp > 0)) {
+                  total_input_ghosts_temp_vec[neighbor_index] = total_input_ghosts_temp_vec[neighbor_index] + total_input_ghosts_temp_vec[index] * (1.-fraction_distribute);
+                }
+
+              }
+
+*/
+
+            }
             processor_point_counter[lowest_processor]++;
 
           } else {
@@ -1714,11 +1837,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // Water discharge
         // Arnold and Sharp (2002) assumed the volume water flux was the same through tunnels and cavities
-
-
-        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) * tunnel_spacing / dx ;
-
-//        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(tunnel_spacing,2);
+/*
+        double number_of_tunnels = dx / tunnel_spacing;
+//        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) * tunnel_spacing / dx ;
+        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) / number_of_tunnels ;
 
 
         // Rothleisburger tunnel radius
@@ -1745,12 +1867,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           effective_pressure_tunnel = m_pressure_temp(i,j);
         }
 
-    /*
-        // Fowler suggested that the effective pressure become atmospheric, but I am setting it to be some fraction of the overburden
-        if(effective_pressure_tunnel / m_pressure_temp(i,j) > max_effective_pressure_ratio ) {
-          effective_pressure_tunnel = max_effective_pressure_ratio * m_pressure_temp(i,j);
-        }
-    */
+
+//        // Fowler suggested that the effective pressure become atmospheric, but I am setting it to be some fraction of the overburden
+//        if(effective_pressure_tunnel / m_pressure_temp(i,j) > max_effective_pressure_ratio ) {
+//          effective_pressure_tunnel = max_effective_pressure_ratio * m_pressure_temp(i,j);
+//        }
+
 
         // Cavity effective pressure
         // Equation A.11 from Arnold and Sharp (2002) (note that the equation is wrong in the paper, see equation 4.16 in Fowler (1987))
@@ -1794,7 +1916,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           m_hydrosystem(i,j) = 2.;
 
         }
-
+*/
         // let us instead use Schoof's parameterization
 
         double c1 = 1.0 / (rho_i * latent_heat);
@@ -1812,12 +1934,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // equation 3 in Schoof 2010
         double Qc = m_velbase_mag2(i,j) * protrusion_height / (c1 * (alpha-1.0) * m_hydro_gradient(i,j));
-
-        double drainage_volume_water_flux = m_volume_water_flux(i,j) * channel_spacing / dx;
+        m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) / ( dx / channel_spacing);;
 
 
         m_hydrosystem(i,j) = 0.;
-        if(drainage_volume_water_flux <= 1e-12) { // essentially no water available
+        if(m_volume_water_flux(i,j) <= 1e-12) { // essentially no water available
 
           effective_pressure_temp = m_pressure_temp(i,j);
 
@@ -1827,8 +1948,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           // equation 2 in Schoof 2010
 
 
-          effective_pressure_temp = pow(( c1 * drainage_volume_water_flux * m_hydro_gradient(i,j) + m_velbase_mag2(i,j) * protrusion_height ) /
-                                         ( c2 * pow(c3, -1.0 / alpha) * pow(drainage_volume_water_flux, 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
+          effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag2(i,j) * protrusion_height ) /
+                                         ( c2 * pow(c3, -1.0 / alpha) * pow(m_volume_water_flux(i,j), 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
                                          , (1.0/Glen_exponent));
 
 
@@ -1844,7 +1965,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 //              "**  %i %i %f %f %e %e  \n", i, j, effective_pressure_temp, effective_pressure_temp / m_pressure_temp(i,j),  drainage_volume_water_flux, Qc );
 
 
-          if(drainage_volume_water_flux > Qc) {
+          if(m_volume_water_flux(i,j) > Qc) {
              m_hydrosystem(i,j) = 1.; // tunnels
           } else {
              m_hydrosystem(i,j) = 2.; // cavities

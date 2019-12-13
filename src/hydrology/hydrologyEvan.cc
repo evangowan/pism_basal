@@ -172,11 +172,11 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "cross section area of a tunnel",
                         "m-2", "");
 
-  m_velbase_mag.create(m_grid, "velbase_mag", WITHOUT_GHOSTS);
-  m_velbase_mag.set_attrs("internal",
+  m_velbase_mag2.create(m_grid, "velbase_mag2", WITHOUT_GHOSTS);
+  m_velbase_mag2.set_attrs("internal",
                         "ice sliding speed seen by subglacial hydrology",
                         "m s-1", "");
-  m_velbase_mag.metadata().set_double("valid_min", 0.0);
+  m_velbase_mag2.metadata().set_double("valid_min", 0.0);
 
 
   m_hydrology_effective_pressure.create(m_grid, "hydrology_effective_pressure", WITHOUT_GHOSTS);
@@ -351,7 +351,7 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_volume_water_flux.define(output);
   m_melt_rate_local.define(output);
   m_hydrosystem.define(output);
-  m_velbase_mag.define(output);
+  m_velbase_mag2.define(output);
   m_hydro_gradient.define(output);
   m_hydro_gradient_dir_u.define(output);
   m_hydro_gradient_dir_v.define(output);
@@ -372,7 +372,7 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_volume_water_flux.write(output);
   m_melt_rate_local.write(output);
   m_hydrosystem.write(output);
-  m_velbase_mag.write(output);
+  m_velbase_mag2.write(output);
   m_hydro_gradient.write(output);
   m_hydro_gradient_dir_u.write(output);
   m_hydro_gradient_dir_v.write(output);
@@ -408,7 +408,41 @@ and then computes the magnitude of that.
  */
 void hydrologyEvan::update_velbase_mag(IceModelVec2S &result) {
   // velbase_mag = |v_b|
-  result.set_to_magnitude(m_stressbalance->advective_velocity());
+
+
+  IceModelVec2S ice_vel_temp(m_grid, "ice_temp", WITHOUT_GHOSTS);;
+  IceModelVec::AccessList list;
+  list.add(ice_vel_temp);
+
+  ice_vel_temp.set_to_magnitude(m_stressbalance->advective_velocity());
+
+  double inverse_seconds_in_year = 1.0/ 365.0*24.0*3600.0;
+  ice_vel_temp.scale(inverse_seconds_in_year);
+/*
+  {
+    ParallelSection loop(m_grid->com);
+    try {
+
+
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
+        ice_vel_temp(i,j) = ice_vel_temp(i,j) / seconds_in_year * 1000.;
+
+      }
+    } catch (...) {
+      loop.failed();
+    }
+    loop.check();
+  }
+
+  ice_vel_temp.update_ghosts();
+*/
+
+  result.copy_from(ice_vel_temp);
+
+
+
+
 }
 
 void hydrologyEvan::update_surface_runoff(IceModelVec2S &result) {
@@ -924,7 +958,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   m_log->message(2,
              "* hydrologyEvan:: cheating");
   double seconds_in_year = 365.0*24.0*3600.0;
-    m_melt_rate_local.set(0.05/seconds_in_year);
+    m_melt_rate_local.set(1.0/seconds_in_year);
 
 
 
@@ -1625,7 +1659,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   const double bump_ratio = bump_amplitude / bedrock_wavelength;
 //  m_log->message(2,
 //             "* updating velocity ...\n");
-  update_velbase_mag(m_velbase_mag);
+  update_velbase_mag(m_velbase_mag2);
 
 
 
@@ -1667,7 +1701,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     ParallelSection loop(m_grid->com);
     try {
 
-      IceModelVec::AccessList list{&m_surface_gradient, &m_surface_gradient_dir, &m_volume_water_flux, &m_total_input_ghosts, &m_tunnel_cross_section, &m_pressure_temp, &m_velbase_mag, &m_hydrology_effective_pressure, &m_hydrology_fraction_overburden, &mask, &m_hydrosystem, &m_hydro_gradient};
+      IceModelVec::AccessList list{&m_surface_gradient, &m_surface_gradient_dir, &m_volume_water_flux, &m_total_input_ghosts, &m_tunnel_cross_section, &m_pressure_temp, &m_velbase_mag2, &m_hydrology_effective_pressure, &m_hydrology_fraction_overburden, &mask, &m_hydrosystem, &m_hydro_gradient};
 
 //  m_log->message(2,
 //             "* Hydrology loop ...\n");
@@ -1740,7 +1774,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // tunnel stability value
         // equation A.12 from Arnold and Sharp (2002)
-        double tunnel_stability = bump_ratio * m_velbase_mag(i,j) / ( bedrock_wavelength * arrhenius_parameter *1.0e9 * pow(effective_pressure_tunnel, Glen_exponent));
+        double tunnel_stability = bump_ratio * m_velbase_mag2(i,j) / ( bedrock_wavelength * arrhenius_parameter *1.0e9 * pow(effective_pressure_tunnel, Glen_exponent));
 
 
         if(m_total_input_ghosts(i,j) <= 1e-12) { // essentially no water available
@@ -1777,7 +1811,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double effective_pressure_temp;
 
         // equation 3 in Schoof 2010
-        double Qc = m_velbase_mag(i,j) * protrusion_height / (c1 * (alpha-1.0) * m_hydro_gradient(i,j));
+        double Qc = m_velbase_mag2(i,j) * protrusion_height / (c1 * (alpha-1.0) * m_hydro_gradient(i,j));
 
         double drainage_volume_water_flux = m_volume_water_flux(i,j) * channel_spacing / dx;
 
@@ -1791,9 +1825,23 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         } else {
 
           // equation 2 in Schoof 2010
-          effective_pressure_temp = pow(( c1 * drainage_volume_water_flux * m_hydro_gradient(i,j) + m_velbase_mag(i,j) * protrusion_height ) /
+
+
+          effective_pressure_temp = pow(( c1 * drainage_volume_water_flux * m_hydro_gradient(i,j) + m_velbase_mag2(i,j) * protrusion_height ) /
                                          ( c2 * pow(c3, -1.0 / alpha) * pow(drainage_volume_water_flux, 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
                                          , (1.0/Glen_exponent));
+
+
+//  m_log->message(2,
+//              "**  %i %i %f %f %e %e, %f \n", i, j, effective_pressure_temp, effective_pressure_temp / m_pressure_temp(i,j), c1 * drainage_volume_water_flux * m_hydro_gradient(i,j), m_velbase_mag2(i,j) * protrusion_height,  m_velbase_mag2(i,j) );
+
+
+//  m_log->message(2,
+//              "**  %i %i %f %f %e %e %e %e \n", i, j, effective_pressure_temp, effective_pressure_temp / m_pressure_temp(i,j), c1 * drainage_volume_water_flux * m_hydro_gradient(i,j), c1, drainage_volume_water_flux,  m_hydro_gradient(i,j) );
+
+
+//  m_log->message(2,
+//              "**  %i %i %f %f %e %e  \n", i, j, effective_pressure_temp, effective_pressure_temp / m_pressure_temp(i,j),  drainage_volume_water_flux, Qc );
 
 
           if(drainage_volume_water_flux > Qc) {

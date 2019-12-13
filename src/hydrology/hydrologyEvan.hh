@@ -67,7 +67,7 @@ protected:
 
 
   IceModelVec2S m_till_cover;      // fraction of surface covered by till
-  IceModelVec2S m_velbase_mag; // velocity at the base of the ice sheet
+  IceModelVec2S m_velbase_mag2; // velocity at the base of the ice sheet
   IceModelVec2S m_hydrology_effective_pressure; // effective pressure at the base due to hydrology
 
   // need to get basal sliding velocity (thus speed):

@@ -177,6 +177,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                hydrology_sliding_enhancement = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
+        double pi = 3.14159265358979;
+
+
         double grounding_reduction = 0.001; // makes things really slippery
 
   const IceModelVec2CellType &mask           = inputs.geometry->cell_type;
@@ -255,55 +258,29 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
        if (hydroEvan) {
 
-         // sliding multipliers used by Arnold and Sharp (2002)
- //        double K1 = 6.3376e-6;
- //        double K2 = 400.0;
 
-          double K1_override = 5e-8;
-          double K2_override = 400;
-          double yield_stress_hydrology2;
-          double yield_stress_hydrology3;
-          double yield_stress_hydrology4;
-         // based on equation A.4 in Arnold and Sharp (2002)
-         // Note, the equation in Arnold and Sharp is messed up, I ended up converting it to the orignal form used in the paper by McInnes and Budd (1984), which
-         // used value of "ice thickness above buoyancy". The values of K1 and K2 were designed for this, and the Arnold and Sharp equation used a value of K2 which
-         // was not converted to the correct units.
 
-//         double z_star = m_effective_pressure(i,j) / (rho_i * g); //ice_thickness_above_buoyancy
-         double z_star = m_effective_pressure(i,j) / (rho_i * g)* hydrology_sliding_enhancement *(2.0-m_till_cover_local(i, j));
+
          double yield_stress_hydrology;
-
-//  m_log->message(2, 
-//             "* %i %i %f %f ...\n", i, j, Ntil, m_effective_pressure(i,j));
+         double rocky_angle = 15. / 180. * pi;
+         double seddy_angle = 5. / 180. * pi;
 
          if (m_velocity_temp(i,j) > 0.0) {
 
+           
 
-
-           yield_stress_hydrology = (z_star+pow(z_star,2)/K2_override) / K1_override   * (pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
  //          yield_stress_hydrology = m_effective_pressure(i,j) * (hydrology_sliding_enhancement / m_till_cover_local(i, j)) ;
+
+          yield_stress_hydrology = m_effective_pressure(i,j) * tan(seddy_angle) * m_till_cover_local(i, j) + m_effective_pressure(i,j) * tan(rocky_angle) * (1.0 - m_till_cover_local(i, j));
 
 
          } else {
            yield_stress_hydrology = high_tauc; // to prevent errors
-//		yield_stress_hydrology2 = high_tauc;
-//            yield_stress_hydrology3 = high_tauc;
-//            yield_stress_hydrology4 = high_tauc;
+
          }
 
          hydro_tauc(i,j) = yield_stress_hydrology;
-/*
-  m_log->message(2, 
-             "*  %i %i %f %f  ...\n", i, j, z_star, (z_star) / K1);
- 
-//  m_log->message(2, 
-//             "* > %i %i %f %f %f %f %f ...\n", i, j, m_effective_pressure(i,j), yield_stress_hydrology, yield_stress_hydrology2, yield_stress_hydrology3, yield_stress_hydrology4);
-          
-  m_log->message(2, 
-             "* >> %i %i %f %f %f %f ...\n", i, j, (z_star+pow(z_star,2)/K2) / K1 * seconds_in_year,  m_pseudo_u_threshold,  m_velocity_temp(i, j)*seconds_in_year, pow(m_pseudo_u_threshold,q) * pow(m_velocity_temp(i,j),1.0-q));
-  m_log->message(2,
-             "* >>> %i %i %f %f %i\n", i, j, m_basal_yield_stress(i, j), yield_stress_hydrology, yield_stress_hydrology < m_basal_yield_stress(i, j));
-*/
+
          // if the ice base is weaker than the sediments
          if (yield_stress_hydrology < m_basal_yield_stress(i, j)) {
 

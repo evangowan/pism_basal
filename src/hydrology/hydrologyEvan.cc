@@ -955,10 +955,10 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   }
   // cheat
 
-  m_log->message(2,
-             "* hydrologyEvan:: cheating");
+//  m_log->message(2,
+//             "* hydrologyEvan:: cheating");
   double seconds_in_year = 365.0*24.0*3600.0;
-    m_melt_rate_local.set(1.0/seconds_in_year);
+//    m_melt_rate_local.set(1.0/seconds_in_year);
 
 
 
@@ -1484,10 +1484,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           if (found_first) {
 
-
+            int index = serial_permutation[lowest_processor][lowest_index];
             if (gradient_storage[lowest_processor][lowest_index] > 1.0) { // distribute water if the gradient is significant enough
 
-              int index = serial_permutation[lowest_processor][lowest_index];
+
 
               cell_coordinates(index, num_i, num_j, 0, 0, i_temp, j_temp);
 
@@ -1749,6 +1749,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
               }
 
 */
+
+            } else { // set the storage to zero
+
+              total_input_ghosts_temp_vec[index] = 0.;
 
             }
             processor_point_counter[lowest_processor]++;

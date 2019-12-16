@@ -103,6 +103,14 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
                  "Pa", "");
 
 
+
+  tauc_ratio.create(m_grid, "tauc_ratio",
+              WITHOUT_GHOSTS);
+  tauc_ratio.set_attrs("internal",
+                 "ratio of tauc from sediment deformation and hydrology sliding law",
+                 "1", "");
+
+
 }
 
 MohrCoulombYieldStressEvan::~MohrCoulombYieldStressEvan() {
@@ -131,6 +139,7 @@ void MohrCoulombYieldStressEvan::define_model_state_impl(const PIO &output) cons
   m_basal_yield_stress.define(output);
   m_sliding_mechanism.define(output);
   hydro_tauc.define(output);
+  tauc_ratio.define(output);
 }
 
 void MohrCoulombYieldStressEvan::write_model_state_impl(const PIO &output) const {
@@ -138,6 +147,7 @@ void MohrCoulombYieldStressEvan::write_model_state_impl(const PIO &output) const
   m_basal_yield_stress.write(output);
   m_sliding_mechanism.write(output);
   hydro_tauc.write(output);
+  tauc_ratio.write(output);
 
 }
 
@@ -187,7 +197,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
   const IceModelVec2S        &temp_thk = *m_grid->variables().get_2d_scalar("thk");
 
   IceModelVec::AccessList list{&m_tillwat, &m_till_phi, &m_basal_yield_stress, &mask,
-      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism, &m_velocity_temp, &hydro_tauc, &temp_thk};
+      &bed_topography, &m_Po, &m_till_cover_local, &m_effective_pressure, &m_sliding_mechanism, &m_velocity_temp, &hydro_tauc, &temp_thk, &tauc_ratio};
 
   if (hydroEvan) {
     hydroEvan->till_water_thickness(m_tillwat);
@@ -198,6 +208,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
   }
 
+  tauc_ratio.set(0.0);
+
   m_log->message(2,
              "* calculating basal strength for each cell ...\n");
   double seconds_in_year = 365.0*24.0*3600.0;
@@ -206,9 +218,6 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
  
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
-
-//  m_log->message(2,
-//             "* %i %i %f %i %i %f\n", i, j, m_basal_yield_stress(i, j), mask.ocean(i, j), mask.ice_free(i, j), m_tillwat(i,j));
 
     double slippery_tauc = high_tauc;
 
@@ -247,8 +256,6 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
         m_basal_yield_stress(i, j) = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
 
 
-//  m_log->message(2, 
-//             "* %i %i %f ...\n", i, j, m_velocity_temp(i, j));
 
        // take into account sediment free areas
 
@@ -257,8 +264,6 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
        m_sliding_mechanism(i,j) = 1;
 
        if (hydroEvan) {
-
-
 
 
          double yield_stress_hydrology;
@@ -281,6 +286,10 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
          hydro_tauc(i,j) = yield_stress_hydrology;
 
+         if(yield_stress_hydrology > 0.0) {
+           tauc_ratio(i,j) = m_basal_yield_stress(i, j) / yield_stress_hydrology;
+         }
+
          // if the ice base is weaker than the sediments
          if (yield_stress_hydrology < m_basal_yield_stress(i, j)) {
 
@@ -299,31 +308,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
        }
 
-/*
-       // find ratio of effective pressure due to hydrology and overburden, limited by the user defined maximum ratio
 
-         double pressure_ratio;
-         if (m_Po(i, j) > 0.0) {
-           pressure_ratio = m_effective_pressure(i, j) / m_Po(i, j);
-         } else {
-           pressure_ratio = 0.0;
-         }
-
-       pressure_ratio = std::min(pressure_ratio,max_effective_pressure_ratio);
-
-       // reduce the effective basal yield stress by this ratio
-
-       double k1 = 6.3e-8;
-       double k2 = 400.0;
-
-       double test_var = k1 * m_basal_yield_stress(i, j) / ( (1.0 - pressure_ratio) * m_Po(i, j) );
-
-       m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * (1.0 - pressure_ratio);
-
-//  m_log->message(2,
-//             "* %i %i %f %f %f ...\n", i, j, m_basal_yield_stress(i, j),test_var, pressure_ratio);
-
-*/
 
     }
 

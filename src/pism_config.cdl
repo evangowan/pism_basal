@@ -205,6 +205,19 @@ netcdf pism_config {
     pism_config:basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement_units = "pure number";
 
 
+    pism_config:basal_yield_stress.mohr_coulomb_evan.rocky_phi = 15.0;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.rocky_phi_doc = "angle for Coulomb friction law for hydrology based sliding over non-sediment covered areas";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.rocky_phi_option = "rocky_phi";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.rocky_phi_type = "scalar";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.rocky_phi_units = "degrees";
+
+    pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi = 5.0;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_doc = "angle for Coulomb friction law for hydrology based sliding over sediment covered areas";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_option = "seddy_phi";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_type = "scalar";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_units = "degrees";
+
+
     pism_config:basal_yield_stress.slippery_grounding_lines = "no";
     pism_config:basal_yield_stress.slippery_grounding_lines_doc = "If yes, at icy grounded locations with bed elevations below sea level, within one cell of floating ice or ice-free ocean, make tauc as low as possible from the Mohr-Coulomb relation.  Specifically, at such locations replace the normally-computed tauc from the Mohr-Coulomb relation, which uses the effective pressure from the modeled amount of water in the till, by the minimum value of tauc from Mohr-Coulomb, i.e. by using the effective pressure corresponding to the maximum amount of till-stored water.  Does not alter the modeled or reported amount of till water, nor does this mechanism affect water conservation.";
     pism_config:basal_yield_stress.slippery_grounding_lines_option = "tauc_slippery_grounding_lines";

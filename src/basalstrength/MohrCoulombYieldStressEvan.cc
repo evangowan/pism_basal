@@ -184,7 +184,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity"),
                q = m_config->get_double("basal_resistance.pseudo_plastic.q"),
-               hydrology_sliding_enhancement = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement");
+               hydrology_sliding_enhancement = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement"),
+               rocky_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.rocky_phi"),
+               seddy_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.seddy_phi");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
         double pi = 3.14159265358979;
@@ -267,14 +269,11 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
 
          double yield_stress_hydrology;
-         double rocky_angle = 15. / 180. * pi;
-         double seddy_angle = 5. / 180. * pi;
+         double rocky_angle = rocky_phi / 180. * pi;
+         double seddy_angle = seddy_phi / 180. * pi;
 
          if (m_velocity_temp(i,j) > 0.0) {
 
-           
-
- //          yield_stress_hydrology = m_effective_pressure(i,j) * (hydrology_sliding_enhancement / m_till_cover_local(i, j)) ;
 
           yield_stress_hydrology = m_effective_pressure(i,j) * tan(seddy_angle) * m_till_cover_local(i, j) + m_effective_pressure(i,j) * tan(rocky_angle) * (1.0 - m_till_cover_local(i, j));
 

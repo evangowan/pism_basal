@@ -1193,8 +1193,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
         if(m_processor_mask(i,j) == 14) {
-     m_log->message(2,
-              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
+//     m_log->message(2,
+//              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
+
+         printf( "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
         }
       }
     } catch (...) {
@@ -1274,8 +1276,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
         if(m_processor_mask(i,j) == 14) {
-     m_log->message(2,
-              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
+//     m_log->message(2,
+//              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
+
+         printf( "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
         }
       }
     } catch (...) {

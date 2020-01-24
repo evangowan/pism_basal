@@ -1183,7 +1183,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_log->message(2,
                "* Sort permutation array ...\n");
 
-    IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient};
+    IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient, &m_processor_mask};
 
    {
     ParallelSection loop(m_grid->com);

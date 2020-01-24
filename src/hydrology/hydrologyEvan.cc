@@ -1475,7 +1475,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
          if (processor == 14) {
-         printf( "**  %i %i %f %i %i %i %f\n", i, j, hydro_gradient_vec[vector_index], int(gradient_permutation_vec[vector_index]), i_temp, j_temp, hydro_gradient_vec[permutation_index]);
+         printf( "**  %i %i %f %i %i %i %f %i\n", i, j, hydro_gradient_vec[vector_index], int(gradient_permutation_vec[vector_index]), i_temp, j_temp, hydro_gradient_vec[permutation_index], int(permutation_index));
          }
           }
         }

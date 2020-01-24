@@ -1180,8 +1180,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
-    m_log->message(2,
-               "* Sort permutation array ...\n");
+//    m_log->message(2,
+//               "* Sort permutation array ...\n");
 
     IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient, &m_processor_mask};
 
@@ -1192,12 +1192,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         const int i = p.i(), j = p.j();
 
         cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
-        if(m_processor_mask(i,j) == 14) {
-//     m_log->message(2,
-//              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
 
-         printf( "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
-        }
       }
     } catch (...) {
       loop.failed();
@@ -1264,8 +1259,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     loop.check();
 
 
-  m_log->message(2,
-             "* testing output of m_gradient_permutation ...\n");
+//  m_log->message(2,
+//             "* testing output of m_gradient_permutation ...\n");
 
    {
     ParallelSection loop(m_grid->com);
@@ -1275,12 +1270,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
         cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
-        if(m_processor_mask(i,j) == 14) {
-//     m_log->message(2,
-//              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
-
-         printf( "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
-        }
+        
       }
     } catch (...) {
       loop.failed();
@@ -1453,8 +1443,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         int i_temp, j_temp, permutation_index;
 
-  m_log->message(2,
-            "* assigning second arrays ...\n");
+//  m_log->message(2,
+//            "* assigning second arrays ...\n");
 
 
 
@@ -1474,9 +1464,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             gradient_storage[processor][processor_point_counter[processor]] = hydro_gradient_vec[permutation_index]; // should be highest to lowest
 
             serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
-         if (processor == 14) {
-         printf( "**  %i %i %f %i %i %i %f %i\n", i, j, hydro_gradient_vec[vector_index], int(gradient_permutation_vec[vector_index]), i_temp, j_temp, hydro_gradient_vec[permutation_index], int(permutation_index));
-         }
+
           }
         }
 

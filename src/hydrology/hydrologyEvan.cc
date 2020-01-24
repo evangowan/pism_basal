@@ -1180,10 +1180,32 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
-//    m_log->message(2,
-//               "* Sort permutation array ...\n");
+    m_log->message(2,
+               "* Sort permutation array ...\n");
 
     IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient};
+
+   {
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
+
+        cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+        if(m_processor_mask(i,j) == 14) {
+     m_log->message(2,
+              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
+        }
+      }
+    } catch (...) {
+      loop.failed();
+    }
+    loop.check();
+  }
+
+
+
+
 
     int counter = 0;
     ParallelSection loop(m_grid->com);
@@ -1231,16 +1253,38 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           }
 
+
           counter++;
       }
     } catch (...) {
       loop.failed();
     }
     loop.check();
+
+
+  m_log->message(2,
+             "* testing output of m_gradient_permutation ...\n");
+
+   {
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
+
+
+        cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+        if(m_processor_mask(i,j) == 14) {
+     m_log->message(2,
+              "**  %i %i %f %i %i %i %f\n", i, j, m_hydro_gradient(i,j), int(m_gradient_permutation(i,j)), i_current, j_current, m_hydro_gradient( i_current, j_current));
+        }
+      }
+    } catch (...) {
+      loop.failed();
+    }
+    loop.check();
+  }
   }
 
-//  m_log->message(2,
-//             "* testing output of m_gradient_permutation ...\n");
 
 
   // find the routing of water, it is easiest done in a serial way, so everything is moved to one processor for this calculation

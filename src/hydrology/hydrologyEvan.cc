@@ -1453,8 +1453,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         int i_temp, j_temp, permutation_index;
 
-//  m_log->message(2,
-//            "* assigning second arrays ...\n");
+  m_log->message(2,
+            "* assigning second arrays ...\n");
+
+
 
         for (int j = 0; j < num_j; j++) {
           for (int i = 0; i < num_i; i++) {
@@ -1472,8 +1474,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             gradient_storage[processor][processor_point_counter[processor]] = hydro_gradient_vec[permutation_index]; // should be highest to lowest
 
             serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
-
-
+         if (processor == 14) {
+         printf( "**  %i %i %f %i %i %i %f\n", i, j, hydro_gradient_vec[vector_index], int(gradient_permutation_vec[vector_index]), i_temp, j_temp, hydro_gradient_vec[permutation_index]);
+         }
           }
         }
 

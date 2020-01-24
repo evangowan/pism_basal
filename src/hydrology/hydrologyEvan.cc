@@ -1469,7 +1469,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             cell_coordinates(gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
 
-            permutation_index = j_temp * num_j + i_temp;
+            permutation_index = j_temp * num_i + i_temp;
 
             gradient_storage[processor][processor_point_counter[processor]] = hydro_gradient_vec[permutation_index]; // should be highest to lowest
 

@@ -32,6 +32,7 @@
 #include "pism/util/iceModelVec2T.hh"
 
 
+
 namespace pism {
 
 //! @brief Calving and iceberg removal code.
@@ -85,6 +86,9 @@ void CalvingDepth::init() {
 void CalvingDepth::update(IceModelVec2CellType &pism_mask,
                                 IceModelVec2S &ice_thickness) {
 
+
+
+
   double max_threshold = m_config->get_double("calving.depth_calving.threshold");
   double fraction_depth = m_config->get_double("calving.depth_calving.fraction_depth");
 
@@ -95,9 +99,11 @@ void CalvingDepth::update(IceModelVec2CellType &pism_mask,
   // need to grap the bed elevation to calculate the threshold
   const IceModelVec2S &bed_elevation = *m_grid->variables().get_2d_scalar("bedrock_altitude");
 
-  IceModelVec::AccessList list{&pism_mask, &ice_thickness, &m_old_mask, &m_calving_threshold_depth};
+
+  IceModelVec::AccessList list{&pism_mask, &ice_thickness, &m_old_mask, &m_calving_threshold_depth, &bed_elevation};
   for (Points p(*m_grid); p; p.next()) {
     const int i = p.i(), j = p.j();
+
 
     m_calving_threshold_depth(i,j) = std::max(-bed_elevation(i,j)*fraction_depth,0.0);
     m_calving_threshold_depth(i,j) = std::min(m_calving_threshold_depth(i,j),max_threshold);
@@ -109,6 +115,7 @@ void CalvingDepth::update(IceModelVec2CellType &pism_mask,
       pism_mask(i, j)     = MASK_ICE_FREE_OCEAN;
     }
   }
+
 
   pism_mask.update_ghosts();
   ice_thickness.update_ghosts();

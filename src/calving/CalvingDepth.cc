@@ -90,6 +90,7 @@ void CalvingDepth::update(IceModelVec2CellType &pism_mask,
 
 
   double max_threshold = m_config->get_double("calving.depth_calving.threshold");
+  double min_threshold = m_config->get_double("calving.depth_calving.min_threshold");
   double fraction_depth = m_config->get_double("calving.depth_calving.fraction_depth");
 
 
@@ -105,7 +106,7 @@ void CalvingDepth::update(IceModelVec2CellType &pism_mask,
     const int i = p.i(), j = p.j();
 
 
-    m_calving_threshold_depth(i,j) = std::max(-bed_elevation(i,j)*fraction_depth,0.0);
+    m_calving_threshold_depth(i,j) = std::max(-bed_elevation(i,j)*fraction_depth,min_threshold);
     m_calving_threshold_depth(i,j) = std::min(m_calving_threshold_depth(i,j),max_threshold);
 
     if (m_old_mask.floating_ice(i, j)           &&

@@ -376,8 +376,14 @@ netcdf pism_config {
     pism_config:calving.depth_calving.threshold_type = "scalar";
     pism_config:calving.depth_calving.threshold_units = "meters";
 
+    pism_config:calving.depth_calving.min_threshold = 40.0;
+    pism_config:calving.depth_calving.min_threshold_doc = "The minimum thickness allowed for the thickness threshold of the edge of the ice shelf for the CalvingDepth submodel";
+    pism_config:calving.depth_calving.min_threshold_option = "depth_calving_threshold";
+    pism_config:calving.depth_calving.min_threshold_type = "scalar";
+    pism_config:calving.depth_calving.min_threshold_units = "meters";
 
-    pism_config:calving.depth_calving.fraction_depth = 0.05;
+
+    pism_config:calving.depth_calving.fraction_depth = 0.10;
     pism_config:calving.depth_calving.fraction_depth_doc = "The fraction of the water depth that the calving threshold will be set.";
     pism_config:calving.depth_calving.fraction_depth_option = "depth_calving_fraction";
     pism_config:calving.depth_calving.fraction_depth_type = "scalar";

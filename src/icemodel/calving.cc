@@ -26,6 +26,7 @@
 #include "pism/util/pism_utilities.hh"
 
 #include "pism/calving/CalvingAtThickness.hh"
+#include "pism/calving/CalvingDepth.hh" // added by Evan
 #include "pism/calving/EigenCalving.hh"
 #include "pism/calving/vonMisesCalving.hh"
 #include "pism/calving/FrontalMelt.hh"
@@ -81,6 +82,14 @@ void IceModel::do_calving() {
   if (m_thickness_threshold_calving) {
     m_thickness_threshold_calving->update(m_geometry.cell_type, m_geometry.ice_thickness);
   }
+
+// added by Evan
+
+  if (m_thickness_depth_calving) {
+    m_thickness_depth_calving->update(m_geometry.cell_type, m_geometry.ice_thickness);
+  }
+
+//
 }
 
 /**

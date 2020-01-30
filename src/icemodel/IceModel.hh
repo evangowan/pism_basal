@@ -72,6 +72,7 @@ class vonMisesCalving;
 class OceanKill;
 class FloatKill;
 class CalvingAtThickness;
+class CalvingDepth;
 class IcebergRemover;
 }
 
@@ -266,6 +267,7 @@ protected:
   calving::OceanKill          *m_ocean_kill_calving;
   calving::FloatKill          *m_float_kill_calving;
   calving::CalvingAtThickness *m_thickness_threshold_calving;
+  calving::CalvingDepth       *m_thickness_depth_calving; // added by Evan
   calving::EigenCalving       *m_eigen_calving;
   calving::vonMisesCalving    *m_vonmises_calving;
   FrontalMelt                 *m_frontal_melt;

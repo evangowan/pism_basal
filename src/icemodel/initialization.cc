@@ -25,6 +25,7 @@
 #include "pism/basalstrength/MohrCoulombYieldStressEvan.hh" // added by Evan
 #include "pism/basalstrength/basal_resistance.hh"
 #include "pism/calving/CalvingAtThickness.hh"
+#include "pism/calving/CalvingDepth.hh"  // added by Evan
 #include "pism/calving/EigenCalving.hh"
 #include "pism/calving/vonMisesCalving.hh"
 #include "pism/calving/FloatKill.hh"
@@ -835,6 +836,20 @@ void IceModel::init_calving() {
     m_submodels["thickness threshold calving"] = m_thickness_threshold_calving;
   }
 
+// added by Evan
+  if (methods.find("depth_calving") != methods.end()) {
+
+    if (m_thickness_depth_calving == NULL) {
+      m_thickness_depth_calving = new calving::CalvingDepth(m_grid);
+    }
+
+    m_thickness_depth_calving->init();
+    methods.erase("depth_calving");
+
+    m_submodels["depth threshold calving"] = m_thickness_depth_calving;
+  }
+
+//
 
   if (methods.find("eigen_calving") != methods.end()) {
 

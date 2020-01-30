@@ -347,7 +347,7 @@ netcdf pism_config {
     pism_config:calving.front_retreat.use_cfl_type = "boolean";
 
     pism_config:calving.methods = "";
-    pism_config:calving.methods_doc = "comma-separated list of calving methods; one or more of 'eigen_calving', 'ocean_kill', 'float_kill', 'thickness_calving'";
+    pism_config:calving.methods_doc = "comma-separated list of calving methods; one or more of 'eigen_calving', 'ocean_kill', 'float_kill', 'thickness_calving', 'depth_calving'";
     pism_config:calving.methods_option = "calving";
     pism_config:calving.methods_type = "string";
 
@@ -367,6 +367,24 @@ netcdf pism_config {
     pism_config:calving.vonmises.sigma_max_option = "vonmises_calving_sigma_max";
     pism_config:calving.vonmises.sigma_max_type = "scalar";
     pism_config:calving.vonmises.sigma_max_units = "Pa";
+
+// added by Evan
+
+    pism_config:calving.depth_calving.threshold = 200.0;
+    pism_config:calving.depth_calving.threshold_doc = "The maximum thickness allowed for the thickness threshold of the edge of the ice shelf for the CalvingDepth submodel";
+    pism_config:calving.depth_calving.threshold_option = "depth_calving_threshold";
+    pism_config:calving.depth_calving.threshold_type = "scalar";
+    pism_config:calving.depth_calving.threshold_units = "meters";
+
+
+    pism_config:calving.depth_calving.fraction_depth = 0.05;
+    pism_config:calving.depth_calving.fraction_depth_doc = "The fraction of the water depth that the calving threshold will be set.";
+    pism_config:calving.depth_calving.fraction_depth_option = "depth_calving_fraction";
+    pism_config:calving.depth_calving.fraction_depth_type = "scalar";
+    pism_config:calving.depth_calving.fraction_depth_units = "pure number";
+
+//
+
 
     pism_config:climate_forcing.buffer_size = 60;
     pism_config:climate_forcing.buffer_size_doc = "number of 2D climate forcing records to keep in memory; = 5 years of monthly records";

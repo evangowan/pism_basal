@@ -26,6 +26,7 @@
 #include "pism/basalstrength/YieldStress.hh"
 #include "pism/basalstrength/basal_resistance.hh"
 #include "pism/calving/CalvingAtThickness.hh"
+#include "pism/calving/CalvingDepth.hh"  // added by Evan
 #include "pism/calving/EigenCalving.hh"
 #include "pism/calving/vonMisesCalving.hh"
 #include "pism/calving/FloatKill.hh"
@@ -156,6 +157,7 @@ IceModel::IceModel(IceGrid::Ptr g, Context::Ptr context)
   m_ocean_kill_calving          = NULL;
   m_float_kill_calving          = NULL;
   m_thickness_threshold_calving = NULL;
+  m_thickness_depth_calving     = NULL; // added by Evan
   m_eigen_calving               = NULL;
   m_vonmises_calving            = NULL;
   m_frontal_melt                = NULL;
@@ -220,6 +222,7 @@ IceModel::~IceModel() {
   delete m_ocean_kill_calving;
   delete m_float_kill_calving;
   delete m_thickness_threshold_calving;
+  delete m_thickness_depth_calving; // added by Evan
   delete m_eigen_calving;
   delete m_vonmises_calving;
   delete m_frontal_melt;

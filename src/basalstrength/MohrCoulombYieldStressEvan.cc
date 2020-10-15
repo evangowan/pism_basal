@@ -253,15 +253,18 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
       double
         s    = water / tillwat_max,
         Ntil = N0 * pow(delta * m_Po(i,j) / N0, s) * pow(10.0, e0overCc * (1.0 - s));
-        Ntil = std::min(m_Po(i,j), Ntil);
 
-        m_basal_yield_stress(i, j) = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
+       Ntil = std::min(m_Po(i,j), Ntil);
+
+       // this is the default PISM sliding law, with sediment deforamtion
+       basal_yield_stress_sediments = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
 
 
 
-       // take into account sediment free areas
+       // The total yield stress take into account sediment free areas, assuming the rocky areas is hydrostatic.
+       // Experience shows that there will be no sliding if there is a small amount of area that has no sediment cover.
 
-       m_basal_yield_stress(i, j) = m_basal_yield_stress(i, j) * m_till_cover_local(i, j) + temp_thk(i,j) * g * rho_i * (1.0 - m_till_cover_local(i, j));
+       m_basal_yield_stress(i, j) = basal_yield_stress_sediments * m_till_cover_local(i, j) + temp_thk(i,j) * g * rho_i * (1.0 - m_till_cover_local(i, j));
 
        m_sliding_mechanism(i,j) = 1;
 
@@ -275,7 +278,15 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          if (m_velocity_temp(i,j) > 0.0) {
 
 
-          yield_stress_hydrology = m_effective_pressure(i,j) * tan(seddy_angle) * m_till_cover_local(i, j) + m_effective_pressure(i,j) * tan(rocky_angle) * (1.0 - m_till_cover_local(i, j));
+          yield_stress_hydrology_seddy = m_effective_pressure(i,j) * tan(seddy_angle);
+
+          // if the yield stress of the sediments is less than the hydrology based sliding, I assume the sediment deformation will take precedence
+          if (basal_yield_stress_sediments < yield_stress_hydrology_seddy) {
+            yield_stress_hydrology_seddy = basal_yield_stress_sediments;
+          }
+
+          // total yield stress is the strength of the sediment covered areas plus the rocky areas
+          yield_stress_hydrology = yield_stress_hydrology_seddy * m_till_cover_local(i, j)  + m_effective_pressure(i,j) * tan(rocky_angle) * (1.0 - m_till_cover_local(i, j));
 
 
          } else {

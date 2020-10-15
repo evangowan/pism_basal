@@ -257,7 +257,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
        Ntil = std::min(m_Po(i,j), Ntil);
 
        // this is the default PISM sliding law, with sediment deforamtion
-       basal_yield_stress_sediments = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
+       double basal_yield_stress_sediments = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
 
 
 
@@ -278,7 +278,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          if (m_velocity_temp(i,j) > 0.0) {
 
 
-          yield_stress_hydrology_seddy = m_effective_pressure(i,j) * tan(seddy_angle);
+          double yield_stress_hydrology_seddy = m_effective_pressure(i,j) * tan(seddy_angle);
 
           // if the yield stress of the sediments is less than the hydrology based sliding, I assume the sediment deformation will take precedence
           if (basal_yield_stress_sediments < yield_stress_hydrology_seddy) {

@@ -179,12 +179,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                delta       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_effective_fraction_overburden"),
                tlftw       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_log_factor_transportable_water"),
                max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio"),
-               K1          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.sliding_flow_factor"),
-               K2          = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.deformation_flow_factor"),
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity"),
                q = m_config->get_double("basal_resistance.pseudo_plastic.q"),
-               hydrology_sliding_enhancement = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.hydrology_sliding_enhancement"),
                rocky_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.rocky_phi"),
                seddy_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.seddy_phi");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");

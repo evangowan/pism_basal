@@ -47,6 +47,8 @@ protected:
   virtual void define_model_state_impl(const PIO &output) const;
   virtual void write_model_state_impl(const PIO &output) const;
 
+  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
+
 protected:
 //  IceModelVec2S m_till_phi, m_tillwat, m_Po;
   hydrology::Hydrology *m_hydrology;

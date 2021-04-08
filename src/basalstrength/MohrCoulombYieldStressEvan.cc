@@ -76,7 +76,7 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
                        "1", "");
 
   m_sliding_mechanism.create(m_grid, "sliding_mechanism", WITHOUT_GHOSTS);
-  m_sliding_mechanism.set_attrs("model_state",
+  m_sliding_mechanism.set_attrs("internal",
                        "0 for no sliding (i.e. ice free), 1 for sediment deformation, 2 for hydrology, 3 for slippery grounding line",
                        "1", "");
 
@@ -328,6 +328,12 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
              "* Finished MohrCoulombYieldStressEvan::update_impl ...\n");
 
   m_basal_yield_stress.update_ghosts();
+}
+
+
+std::map<std::string, Diagnostic::Ptr> MohrCoulombYieldStressEvan::diagnostics_impl() const {
+  return combine({{"sliding_mechanism", Diagnostic::wrap(m_sliding_mechanism)}},
+                 YieldStress::diagnostics_impl());
 }
 
 } // end of namespace pism

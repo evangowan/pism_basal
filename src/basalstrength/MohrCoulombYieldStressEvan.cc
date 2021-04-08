@@ -178,7 +178,6 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                               m_config->get_double("basal_yield_stress.mohr_coulomb.till_compressibility_coefficient")),
                delta       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_effective_fraction_overburden"),
                tlftw       = m_config->get_double("basal_yield_stress.mohr_coulomb.till_log_factor_transportable_water"),
-               max_effective_pressure_ratio = m_config->get_double("hydrology.maximum_effective_pressure_ratio"),
                rho_i = m_config->get_double("constants.ice.density"),
                g = m_config->get_double("constants.standard_gravity"),
                q = m_config->get_double("basal_resistance.pseudo_plastic.q"),

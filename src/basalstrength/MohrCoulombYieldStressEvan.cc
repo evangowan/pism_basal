@@ -76,7 +76,7 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
                        "1", "");
 
   m_sliding_mechanism.create(m_grid, "sliding_mechanism", WITHOUT_GHOSTS);
-  m_sliding_mechanism.set_attrs("internal",
+  m_sliding_mechanism.set_attrs("model_state",
                        "0 for no sliding (i.e. ice free), 1 for sediment deformation, 2 for hydrology, 3 for slippery grounding line",
                        "1", "");
 

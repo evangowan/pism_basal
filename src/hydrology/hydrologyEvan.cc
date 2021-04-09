@@ -1638,7 +1638,7 @@ void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_
 
 
 //! Return the effective thickness of the water stored in till.
-void HydrologyEvan::hydrology_type(IceModelVec2S &result) const {
+void hydrologyEvan::hydrology_type(IceModelVec2S &result) const {
   result.copy_from(m_hydrosystem);
 }
 

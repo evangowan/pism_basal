@@ -82,6 +82,8 @@ protected:
 
   // diagnostic stuff
 
+  IceModelVec2S m_hydrosystem;
+
   virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
 
   virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
@@ -89,7 +91,7 @@ protected:
 
 private:
 
-  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_total_input_ghosts_temp,m_volume_water_flux, m_tunnel_cross_section, m_hydrosystem, m_surface_gradient, m_surface_elevation_temp,  m_bed_elevation_temp, m_hydrology_fraction_overburden, m_gradient_permutation, m_processor_mask, m_offset_mask_u, m_width_mask_u, m_offset_mask_v, m_width_mask_v, m_hydro_gradient_dir_u, m_hydro_gradient_dir_v, m_gradient_temp_u, m_gradient_temp_v;
+  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_total_input_ghosts_temp,m_volume_water_flux, m_tunnel_cross_section,  m_surface_gradient, m_surface_elevation_temp,  m_bed_elevation_temp, m_hydrology_fraction_overburden, m_gradient_permutation, m_processor_mask, m_offset_mask_u, m_width_mask_u, m_offset_mask_v, m_width_mask_v, m_hydro_gradient_dir_u, m_hydro_gradient_dir_v, m_gradient_temp_u, m_gradient_temp_v;
 
   IceModelVec2V  m_surface_gradient_dir, m_surface_gradient_temp, m_bed_gradient_temp;// directional gradient
 

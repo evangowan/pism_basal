@@ -23,6 +23,8 @@
 #include "pism/util/Diagnostic.hh"
 #include "Hydrology.hh"
 
+#include "HydrologyEvan.hh"
+
 namespace pism {
 namespace hydrology {
 /*! \file

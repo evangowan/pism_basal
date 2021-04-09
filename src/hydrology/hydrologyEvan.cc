@@ -1637,6 +1637,12 @@ void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_
 // Diagnostics
 
 
+//! Return the effective thickness of the water stored in till.
+void HydrologyEvan::hydrology_type(IceModelVec2S &result) const {
+  result.copy_from(m_hydrosystem);
+}
+
+
 std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
   std::map<std::string, Diagnostic::Ptr> result = {
     {"hydrology_type",                     Diagnostic::Ptr(new hydrology_type(this))}
@@ -1661,8 +1667,8 @@ hydrology_type::hydrology_type(const hydrologyEvan *m)
 IceModelVec::Ptr hydrology_type::compute_impl() const {
   IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
   result->metadata() = m_vars[0];
-  result->copy_from(model->m_hydrosystem);
 
+  model->hydrology_type(*result);
 
   return result;
 }

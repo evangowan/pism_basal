@@ -82,7 +82,7 @@ protected:
 
   // diagnostic stuff
 
-  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
+//  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
 
 
   virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;

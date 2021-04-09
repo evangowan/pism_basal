@@ -1633,5 +1633,43 @@ void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_
 }
 
 
+// Diagnostics
+
+
+std::map<std::string, Diagnostic::Ptr> HydrologyEvan::diagnostics_impl() const {
+  std::map<std::string, Diagnostic::Ptr> result = {
+    {"hydrology_type",                     Diagnostic::Ptr(new PO_hydrology_type(this))}
+  };
+  return result;
+}
+
+
+void HydrologyEvan::hydrology_type(IceModelVec2S &result) const {
+  this->hydrology_type_impl(result);
+}
+
+
+PO_hydrology_type::PO_hydrology_type(const HydrologyEvan *m)
+  : Diag<HydrologyEvan>(m) {
+
+  /* set metadata: */
+  m_vars = {SpatialVariableMetadata(m_sys, "hydrology_type")};
+
+  set_attrs("ice temperature at the basal surface of ice shelves", "",
+            "Kelvin", "Kelvin", 0);
+}
+
+IceModelVec::Ptr PO_hydrology_type::compute_impl() const {
+
+  IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
+  result->metadata(0) = m_vars[0];
+
+  model->hydrology_type(*result);
+
+  return result;
+}
+
+
+
 } // end of namespace hydrology
 } // end of namespace pism

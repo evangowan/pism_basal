@@ -55,6 +55,12 @@ public:
   virtual void get_EffectivePressure(IceModelVec2S &result);
 
   virtual void update_velbase_mag(IceModelVec2S &result);
+
+
+  // diagnostic stuff
+
+  void hydrology_type(IceModelVec2S &result) const;
+
 protected:
 
   virtual void get_input_rate(double hydro_t, double hydro_dt, IceModelVec2S &result);
@@ -72,6 +78,11 @@ protected:
 
   // need to get basal sliding velocity (thus speed):
   stressbalance::StressBalance* m_stressbalance;
+
+
+  // diagnostic stuff
+
+  virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
 
 
 private:
@@ -94,6 +105,15 @@ protected:
 
 };
 
+
+/*! @brief Hydrology system type. */
+class PO_hydrology_type : public Diag<Hydrology>
+{
+public:
+  PO_hydrology_type(const Hydrology *m);
+protected:
+  IceModelVec::Ptr compute_impl() const;
+};
 
 
 } // end of namespace hydrology

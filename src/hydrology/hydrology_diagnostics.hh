@@ -175,7 +175,7 @@ public:
 
 //! \brief Reports the water drainage scheme.
 /*! Only available for hydrology::HydrologyEvan and its derived classes. */
-class hydrologyEvan_hydrology_type : public Diag<hydrologyEvan>
+class hydrology_type : public Diag<hydrologyEvan>
 {
 public:
   hydrology_type(const hydrologyEvan *m);

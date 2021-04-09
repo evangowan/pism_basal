@@ -59,7 +59,7 @@ public:
 
   // diagnostic stuff
 
-  void hydrology_type(IceModelVec2S &result) const;
+ // void hydrology_type(IceModelVec2S &result) const;
 
 protected:
 

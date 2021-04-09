@@ -1637,7 +1637,7 @@ void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_
 // Diagnostics
 
 
-std::map<std::string, Diagnostic::Ptr> HydrologyEvan::diagnostics_impl() const {
+std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
   std::map<std::string, Diagnostic::Ptr> result = {
     {"hydrology_type",                     Diagnostic::Ptr(new PO_hydrology_type(this))}
   };
@@ -1646,8 +1646,8 @@ std::map<std::string, Diagnostic::Ptr> HydrologyEvan::diagnostics_impl() const {
 
 
 
-HydrologyEvan_hydrology_type::hydrology_type(const HydrologyEvan *m)
-  : Diag<HydrologyEvan>(m) {
+hydrologyEvan_hydrology_type::hydrology_type(const hydrologyEvan *m)
+  : Diag<hydrologyEvan>(m) {
 
   // set metadata:
 

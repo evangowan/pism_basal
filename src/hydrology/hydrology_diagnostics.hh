@@ -175,10 +175,10 @@ public:
 
 //! \brief Reports the water drainage scheme.
 /*! Only available for hydrology::HydrologyEvan and its derived classes. */
-class HydrologyEvan_hydrology_type : public Diag<HydrologyEvan>
+class hydrologyEvan_hydrology_type : public Diag<hydrologyEvan>
 {
 public:
-  hydrology_type(const HydrologyEvan *m);
+  hydrology_type(const hydrologyEvan *m);
 protected:
   virtual IceModelVec::Ptr compute_impl() const;
 };

@@ -82,8 +82,7 @@ protected:
 
   // diagnostic stuff
 
-//  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
-
+  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
 
   virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
 
@@ -108,15 +107,6 @@ protected:
 
 };
 
-
-/*! @brief Hydrology system type. */
-class PO_hydrology_type : public Diag<Hydrology>
-{
-public:
-  PO_hydrology_type(const Hydrology *m);
-protected:
-  IceModelVec::Ptr compute_impl() const;
-};
 
 
 } // end of namespace hydrology

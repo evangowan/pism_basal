@@ -30,6 +30,7 @@
 #include "pism/coupler/surface/TemperatureIndex.hh" // needed to grab srunoff variable
 #include "pism/stressbalance/StressBalance.hh"
 
+#include "hydrology_diagnostics.hh"
 
 
 #include "pism/util/iceModelVec2T.hh"
@@ -1636,39 +1637,35 @@ void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_
 // Diagnostics
 
 
-std::map<std::string, Diagnostic::Ptr> Hydrology::diagnostics_impl() const {
+std::map<std::string, Diagnostic::Ptr> HydrologyEvan::diagnostics_impl() const {
   std::map<std::string, Diagnostic::Ptr> result = {
     {"hydrology_type",                     Diagnostic::Ptr(new PO_hydrology_type(this))}
   };
-  return result;
+  return combine(result, Hydrology::diagnostics_impl());
 }
 
 
-void HydrologyEvan::hydrology_type(IceModelVec2S &result) const {
-  this->hydrology_type_impl(result);
-}
 
-
-PO_hydrology_type::PO_hydrology_type(const HydrologyEvan *m)
+HydrologyEvan_hydrology_type::hydrology_type(const HydrologyEvan *m)
   : Diag<HydrologyEvan>(m) {
 
-  /* set metadata: */
+  // set metadata:
+
   m_vars = {SpatialVariableMetadata(m_sys, "hydrology_type")};
 
-  set_attrs("ice temperature at the basal surface of ice shelves", "",
-            "Kelvin", "Kelvin", 0);
+  set_attrs("type of hydrology, 0 dry 1 tunnels 2 cavity 3 overburden 4 almost floating", "",
+            "1", "1", 0);
 }
 
-IceModelVec::Ptr PO_hydrology_type::compute_impl() const {
 
+IceModelVec::Ptr hydrology_type::compute_impl() const {
   IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
-  result->metadata(0) = m_vars[0];
+  result->metadata() = m_vars[0];
+  result->copy_from(model->m_hydrosystem);
 
-  model->hydrology_type(*result);
 
   return result;
 }
-
 
 
 } // end of namespace hydrology

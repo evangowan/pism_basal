@@ -384,6 +384,9 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
 }
 
 
+// Diagnostics
+
+
 std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
   std::map<std::string, Diagnostic::Ptr> result = {
     {"hydrology_type",                     Diagnostic::Ptr(new hydrology_type(this))}
@@ -391,6 +394,11 @@ std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
   return combine(result, Hydrology::diagnostics_impl());
 }
 
+
+//! Return the hydrology type.
+void hydrologyEvan::hydrology_type(IceModelVec2S &result) const {
+  result.copy_from(m_hydrosystem);
+}
 
 void hydrologyEvan::get_SedimentDistribution(IceModelVec2S &result) {
 
@@ -1639,14 +1647,28 @@ void hydrologyEvan::cell_coordinates(double in_number, int number_i, int number_
 }
 
 
-// Diagnostics
 
 
-//! Return the hydrology type.
-void hydrologyEvan::hydrology_type(IceModelVec2S &result) const {
-  result.copy_from(m_hydrosystem);
+hydrology_type::hydrology_type(const hydrologyEvan *m)
+  : Diag<hydrologyEvan>(m) {
+
+  // set metadata:
+
+  m_vars = {SpatialVariableMetadata(m_sys, "hydrology_type")};
+
+  set_attrs("type of hydrology, 0 dry 1 tunnels 2 cavity 3 overburden 4 almost floating", "",
+            "1", "1", 0);
 }
 
+
+IceModelVec::Ptr hydrology_type::compute_impl() const {
+  IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
+  result->metadata() = m_vars[0];
+
+  model->hydrology_type(*result);
+
+  return result;
+}
 
 
 } // end of namespace hydrology

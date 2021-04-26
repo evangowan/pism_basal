@@ -59,7 +59,7 @@ public:
 
   // diagnostic stuff
 
-  virtual void hydrology_type(IceModelVec2S &result) const;
+  friend class hydrology_type(IceModelVec2S &result) const;
 
 protected:
 

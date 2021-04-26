@@ -221,27 +221,6 @@ double MCHydrology_null_strip_loss::compute() {
 
 
 
-hydrology_type::hydrology_type(const hydrologyEvan *m)
-  : Diag<hydrologyEvan>(m) {
-
-  // set metadata:
-
-  m_vars = {SpatialVariableMetadata(m_sys, "hydrology_type")};
-
-  set_attrs("type of hydrology, 0 dry 1 tunnels 2 cavity 3 overburden 4 almost floating", "",
-            "1", "1", 0);
-}
-
-
-IceModelVec::Ptr hydrology_type::compute_impl() const {
-  IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
-  result->metadata() = m_vars[0];
-
-  model->hydrology_type(*result);
-
-  return result;
-}
-
 
 } // end of namespace hydrology
 } // end of namespace pism

@@ -19,10 +19,10 @@
 #include <iostream>
 #include <array>
 #include "Hydrology.hh"
+#include "hydrology_diagnostics.hh"
 #include "hydrologyEvan.hh"
 #include "pism/util/Mask.hh"
 #include "pism/util/error_handling.hh"
-#include "hydrology_diagnostics.hh"
 #include "pism/util/Vars.hh"
 #include "pism/util/MaxTimestep.hh"
 #include "pism/util/pism_options.hh"
@@ -30,7 +30,6 @@
 #include "pism/coupler/surface/TemperatureIndex.hh" // needed to grab srunoff variable
 #include "pism/stressbalance/StressBalance.hh"
 
-#include "hydrology_diagnostics.hh"
 
 
 #include "pism/util/iceModelVec2T.hh"

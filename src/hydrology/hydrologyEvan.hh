@@ -57,9 +57,6 @@ public:
   virtual void update_velbase_mag(IceModelVec2S &result);
 
 
-  // diagnostic stuff
-
-  friend class hydrology_type(IceModelVec2S &result) const;
 
 protected:
 
@@ -85,6 +82,8 @@ protected:
 
   IceModelVec2S m_hydrosystem;
 
+
+  friend class hydrology_type;
 
 //  virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
 

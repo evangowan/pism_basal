@@ -68,6 +68,7 @@ protected:
   //! Solves an implicit step of a highly-simplified ODE.
   virtual void update_impl(double icet, double icedt);
 
+  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
 
   virtual void update_surface_runoff(IceModelVec2S &result);
 
@@ -84,7 +85,6 @@ protected:
 
   IceModelVec2S m_hydrosystem;
 
-  virtual std::map<std::string, Diagnostic::Ptr> diagnostics_impl() const;
 
   virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
 

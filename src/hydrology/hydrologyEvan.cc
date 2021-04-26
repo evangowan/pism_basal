@@ -395,10 +395,10 @@ std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
 }
 
 
-//! Return the hydrology type.
-//void hydrologyEvan::hydrology_type(IceModelVec2S &result) const {
-//  result.copy_from(m_hydrosystem);
-//}
+// Return the hydrology type.
+void hydrologyEvan::get_hydrology_type(IceModelVec2S &result) const {
+  result.copy_from(m_hydrosystem);
+}
 
 void hydrologyEvan::get_SedimentDistribution(IceModelVec2S &result) {
 
@@ -1665,10 +1665,12 @@ IceModelVec::Ptr hydrology_type::compute_impl() const {
   IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
   result->metadata() = m_vars[0];
 
-  model->hydrology_type(*result);
+  model->get_hydrology_type(*result);
 
   return result;
 }
+
+
 
 
 } // end of namespace hydrology

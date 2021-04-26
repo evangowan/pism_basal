@@ -396,7 +396,7 @@ std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
 
 
 // Return the hydrology type.
-void hydrologyEvan::get_hydrology_type(IceModelVec2S &result) {
+void hydrologyEvan::get_hydrology_type(IceModelVec2S &result) const {
   result.copy_from(m_hydrosystem);
 }
 

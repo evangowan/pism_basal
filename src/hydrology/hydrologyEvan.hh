@@ -53,7 +53,7 @@ public:
   virtual void surface_gradient(IceModelVec2V &result);
   virtual void bed_gradient(IceModelVec2V &result);
   virtual void get_EffectivePressure(IceModelVec2S &result);
-  virtual void get_hydrology_type(IceModelVec2S &result);
+  virtual void get_hydrology_type(IceModelVec2S &result) const;
   virtual void update_velbase_mag(IceModelVec2S &result);
 
 

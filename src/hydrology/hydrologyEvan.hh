@@ -109,6 +109,18 @@ protected:
 
 };
 
+// Diagnostics for HydrologyEvan
+
+
+//! \brief Reports the water drainage scheme.
+/*! Only available for hydrology::HydrologyEvan and its derived classes. */
+class hydrology_type : public Diag<hydrologyEvan>
+{
+public:
+  hydrology_type(const hydrologyEvan *m);
+protected:
+  virtual IceModelVec::Ptr compute_impl() const;
+};
 
 
 } // end of namespace hydrology

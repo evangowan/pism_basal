@@ -86,7 +86,7 @@ protected:
   IceModelVec2S m_hydrosystem;
 
 
-  virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
+//  virtual void hydrology_type_impl(IceModelVec2S &result) const = 0;
 
 
 private:

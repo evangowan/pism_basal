@@ -1662,14 +1662,14 @@ hydrology_type::hydrology_type(const hydrologyEvan *m)
 
 
 IceModelVec::Ptr hydrology_type::compute_impl() const {
-  IceModelVec2S::Ptr result(new IceModelVec2S(m_grid, "hydrology_type", WITHOUT_GHOSTS));
+  IceModelVec2S::Ptr result(new IceModelVec2S);
+  result->create(m_grid, "hydrology_type", WITHOUT_GHOSTS);
   result->metadata() = m_vars[0];
 
   model->get_hydrology_type(*result);
 
   return result;
 }
-
 
 
 

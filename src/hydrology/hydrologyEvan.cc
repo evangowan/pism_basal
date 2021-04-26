@@ -385,6 +385,12 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
 }
 
 
+std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
+  std::map<std::string, Diagnostic::Ptr> result = {
+    {"hydrology_type",                     Diagnostic::Ptr(new hydrology_type(this))}
+  };
+  return combine(result, Hydrology::diagnostics_impl());
+}
 
 
 void hydrologyEvan::get_SedimentDistribution(IceModelVec2S &result) {

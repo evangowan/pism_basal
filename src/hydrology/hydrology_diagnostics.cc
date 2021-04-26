@@ -218,12 +218,6 @@ double MCHydrology_null_strip_loss::compute() {
 
 
 
-std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
-  std::map<std::string, Diagnostic::Ptr> result = {
-    {"hydrology_type",                     Diagnostic::Ptr(new hydrology_type(this))}
-  };
-  return combine(result, Hydrology::diagnostics_impl());
-}
 
 
 

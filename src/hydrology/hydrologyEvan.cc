@@ -1687,7 +1687,7 @@ volume_water_flux::volume_water_flux(const hydrologyEvan *m)
   m_vars = {SpatialVariableMetadata(m_sys, "volume_water_flux")};
 
   set_attrs("volume water flux through tunnel system", "",
-            "m3 s-1", "m3 year-1", 0);
+            "m3 s-1", "m3 s-1", 0);
 }
 
 

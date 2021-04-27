@@ -390,7 +390,7 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
 std::map<std::string, Diagnostic::Ptr> hydrologyEvan::diagnostics_impl() const {
   std::map<std::string, Diagnostic::Ptr> result = {
     {"hydrology_type",                     Diagnostic::Ptr(new hydrology_type(this))},
-    {"volume_water_flux",                     Diagnostic::Ptr(new hydrology_type(this))}
+    {"volume_water_flux",                     Diagnostic::Ptr(new volume_water_flux(this))}
   };
   return combine(result, Hydrology::diagnostics_impl());
 }

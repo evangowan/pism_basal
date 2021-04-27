@@ -184,6 +184,14 @@ protected:
   virtual IceModelVec::Ptr compute_impl() const;
 };
 
+class volume_water_flux : public Diag<hydrologyEvan>
+{
+public:
+  volume_water_flux(const hydrologyEvan *m);
+protected:
+  virtual IceModelVec::Ptr compute_impl() const;
+};
+
 
 
 } // end of namespace hydrology

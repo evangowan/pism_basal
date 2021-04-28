@@ -279,14 +279,25 @@ void hydrologyEvan::init() {
 
   if (opts.type == INIT_RESTART) {
     m_till_cover.read(opts.filename, opts.record);
+
+    m_volume_water_flux.read(opts.filename, opts.record);
+    m_hydrosystem.read(opts.filename, opts.record);
+
   } else if (opts.type == INIT_BOOTSTRAP) {
     m_till_cover.regrid(opts.filename, OPTIONAL, till_cover);
+
+    m_volume_water_flux.regrid(opts.filename, OPTIONAL, 0.0);
+    m_hydrosystem.regrid(opts.filename, OPTIONAL, 0.0);
+
   } else {
     m_till_cover.set(till_cover);
+
+    m_volume_water_flux.set(0.0);
+    m_hydrosystem.set(0.0);
   }
 
-  m_volume_water_flux.set(0.0);
-  m_hydrosystem.set(0.0);
+
+
 
   // initialize the permutation array, after the first sorting it should not take long to sort
 

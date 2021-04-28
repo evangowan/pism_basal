@@ -368,9 +368,9 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir_v.define(output);
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
-  m_processor_mask.define(output);
-  m_pressure_temp.define(output);
-  m_gradient_permutation.define(output);
+//  m_processor_mask.define(output);  // does not need to be output
+//  m_pressure_temp.define(output); // does not need to be output
+//  m_gradient_permutation.define(output); // does not need to be output
 
 }
 
@@ -389,9 +389,9 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir_v.write(output);
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
-  m_processor_mask.write(output);
-  m_pressure_temp.write(output);
-  m_gradient_permutation.write(output);
+//  m_processor_mask.write(output);  // does not need to be output
+//  m_pressure_temp.write(output); // does not need to be output
+//  m_gradient_permutation.write(output); // does not need to be output
 }
 
 

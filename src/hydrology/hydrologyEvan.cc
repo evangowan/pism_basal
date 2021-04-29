@@ -180,7 +180,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
 
   m_hydrology_effective_pressure.create(m_grid, "hydrology_effective_pressure", WITHOUT_GHOSTS);
-  m_hydrology_effective_pressure.set_attrs("internal",
+  m_hydrology_effective_pressure.set_attrs("model_state",
                         "effective pressure due to hydrology",
                         "Pa", "");
   m_hydrology_effective_pressure.metadata().set_double("valid_min", 0.0);
@@ -297,6 +297,36 @@ void hydrologyEvan::init() {
   }
 
 
+  // initialize the effective pressure
+
+  if (opts.type == INIT_RESTART) {
+    m_hydrology_effective_pressure.read(opts.filename, opts.record);
+
+
+  } else if (opts.type == INIT_BOOTSTRAP) {
+    m_hydrology_effective_pressure.regrid(opts.filename, OPTIONAL, 36100800);
+
+
+  } else {
+
+    list.add(m_hydrology_effective_pressure);
+    list.add(temp_thk);
+
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
+
+        m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g;
+
+      }
+    } catch (...) {
+      loop.failed();
+    }
+    loop.check();
+
+  }
+
 
 
   // initialize the permutation array, after the first sorting it should not take long to sort
@@ -312,7 +342,7 @@ void hydrologyEvan::init() {
   list.add(m_offset_mask_v);
   list.add(m_width_mask_u);
   list.add(m_width_mask_v);
-  list.add(m_hydrology_effective_pressure);
+
   list.add(temp_thk);
 
 
@@ -329,7 +359,6 @@ void hydrologyEvan::init() {
     for (Points p(*m_grid); p; p.next()) {
       const int i = p.i(), j = p.j();
 
-      m_hydrology_effective_pressure(i,j) = temp_thk(i,j) * rho_i * g;
 
       m_gradient_permutation(i, j) = (double)counter;
       m_processor_mask(i,j) = m_grid -> rank();

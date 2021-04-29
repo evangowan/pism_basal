@@ -205,7 +205,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
     hydroEvan->update_velbase_mag(m_velocity_temp);
 
    } else {
-     m_till_cover_local.set(1.0)
+     m_till_cover_local.set(1.0);
 
   }
 

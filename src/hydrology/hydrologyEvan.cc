@@ -299,6 +299,10 @@ void hydrologyEvan::init() {
 
   // initialize the effective pressure
 
+
+
+  IceModelVec::AccessList list;
+
   if (opts.type == INIT_RESTART) {
     m_hydrology_effective_pressure.read(opts.filename, opts.record);
 
@@ -335,7 +339,6 @@ void hydrologyEvan::init() {
 
   int counter = 0;
 
-  IceModelVec::AccessList list;
   list.add(m_gradient_permutation);
   list.add(m_processor_mask);
   list.add(m_offset_mask_u);

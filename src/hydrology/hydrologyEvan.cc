@@ -127,12 +127,12 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
 
   m_surface_elevation_temp.create(m_grid, "surface_elevation_temp", WITH_GHOSTS, 2);
-  m_surface_elevation_temp.set_attrs("model_state",
+  m_surface_elevation_temp.set_attrs("internal",
                        "temporary surface_elevation",
                        "m", "");
 
   m_bed_elevation_temp.create(m_grid, "bed_elevation_temp", WITH_GHOSTS, 2);
-  m_bed_elevation_temp.set_attrs("model_state",
+  m_bed_elevation_temp.set_attrs("internal",
                        "temporary bed_elevation",
                        "m", "");
 
@@ -146,7 +146,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_till_cover.set_time_independent(true);
 
   m_gradient_permutation.create(m_grid, "gradient_permutation", WITHOUT_GHOSTS);
-  m_gradient_permutation.set_attrs("model_state",
+  m_gradient_permutation.set_attrs("internal",
                        "permutation array for sorting the gradient",
                        "1", "");
 
@@ -180,7 +180,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
 
   m_hydrology_effective_pressure.create(m_grid, "hydrology_effective_pressure", WITHOUT_GHOSTS);
-  m_hydrology_effective_pressure.set_attrs("model_state",
+  m_hydrology_effective_pressure.set_attrs("internal",
                         "effective pressure due to hydrology",
                         "Pa", "");
   m_hydrology_effective_pressure.metadata().set_double("valid_min", 0.0);
@@ -189,7 +189,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_hydrology_fraction_overburden.set_attrs("internal",
                         "fraction of effective pressure to overburden",
                         "1", "");
-  m_hydrology_effective_pressure.metadata().set_double("valid_min", 0.0);
+  m_hydrology_fraction_overburden.metadata().set_double("valid_min", 0.0);
 
 
 

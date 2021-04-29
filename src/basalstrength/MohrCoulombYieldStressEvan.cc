@@ -129,7 +129,7 @@ void MohrCoulombYieldStressEvan::init_impl() {
 
   MohrCoulombYieldStress::init_impl();
 
-  m_effective_pressure.set(0.0);
+//  m_effective_pressure.set(0.0);
 
 }
 
@@ -203,6 +203,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
     hydroEvan->get_EffectivePressure(m_effective_pressure);
     hydroEvan->get_SedimentDistribution(m_till_cover_local);
     hydroEvan->update_velbase_mag(m_velocity_temp);
+
+   } else {
+     m_till_cover_local.set(1.0)
 
   }
 

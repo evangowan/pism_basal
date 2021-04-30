@@ -16,6 +16,7 @@
 // along with PISM; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+
 #include <iostream>
 #include <array>
 #include "Hydrology.hh"
@@ -1062,6 +1063,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           double Wtill_before = m_Wtil(i,j);
           double Wtill_after;
           double before_wat=m_total_input_ghosts(i,j);
+
+          if (i == 32 && j == 94 {
+            std::cout "Debug: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << std::endl;
+          }
+
           if (m_till_cover(i,j) < 0.01) { // no till
             Wtill_after = Wtill_before;
           } else {

@@ -1065,7 +1065,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           double before_wat=m_total_input_ghosts(i,j);
 
           if (i == 32 && j == 94) {
-            std::cout "Debug: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << std::endl;
+            std::cout << "Debug: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << std::endl;
           }
 
           if (m_till_cover(i,j) < 0.01) { // no till

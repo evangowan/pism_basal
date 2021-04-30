@@ -282,7 +282,7 @@ void hydrologyEvan::init() {
 
     m_volume_water_flux.read(opts.filename, opts.record);
     m_hydrosystem.read(opts.filename, opts.record);
-
+    m_Wtil.read(opts.filename, opts.record);
 
 
   } else if (opts.type == INIT_BOOTSTRAP) {
@@ -290,7 +290,7 @@ void hydrologyEvan::init() {
 
     m_volume_water_flux.regrid(opts.filename, OPTIONAL, 0.0);
     m_hydrosystem.regrid(opts.filename, OPTIONAL, 0.0);
-
+    m_Wtil.regrid(opts.filename, OPTIONAL, 0.0);
 
 
   } else {
@@ -299,6 +299,7 @@ void hydrologyEvan::init() {
     m_volume_water_flux.set(0.0);
     m_hydrosystem.set(0.0);
     m_velbase_mag2.set(0.0);
+    m_Wtil.set(0.0);
 
   }
 
@@ -393,6 +394,7 @@ void hydrologyEvan::init() {
 
 void hydrologyEvan::define_model_state_impl(const PIO &output) const {
 
+  m_Wtil.define(output);
   m_till_cover.define(output);
   m_hydrology_effective_pressure.define(output);
   m_total_input_ghosts.define(output);

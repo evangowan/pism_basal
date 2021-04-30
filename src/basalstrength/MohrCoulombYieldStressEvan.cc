@@ -292,7 +292,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
          double rocky_angle = rocky_phi / 180. * pi;
          double seddy_angle = seddy_phi / 180. * pi;
 
-         if (m_velocity_temp(i,j) > 0.0) {
+         if (temp_thk(i,j) > 1.0) {
 
 
           double yield_stress_hydrology_seddy = m_effective_pressure(i,j) * tan(seddy_angle);

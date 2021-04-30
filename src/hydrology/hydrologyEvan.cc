@@ -973,6 +973,11 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
       assert(result(i,j) >= 0.0);
 
+
+          if (i == 32 && j == 94) {
+            std::cout << "Debug input: " << m_melt_rate_local(i,j)  << " " << m_bmelt_local(i,j)  << " " << result(i,j) << std::endl;
+          }
+
     }
 
   } catch (...) {

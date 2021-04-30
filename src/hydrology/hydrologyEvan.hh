@@ -107,7 +107,6 @@ private:
   void finite_difference(double point_array[3][3], double& u, double& v);
   void gradient_five_point(double point_array[5][5], double& u, double& v);
 
-  bool first_time;
 
 protected:
 

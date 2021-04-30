@@ -173,7 +173,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "m-2", "");
 
   m_velbase_mag2.create(m_grid, "velbase_mag2", WITHOUT_GHOSTS);
-  m_velbase_mag2.set_attrs("internal",
+  m_velbase_mag2.set_attrs("model_state",
                         "ice sliding speed seen by subglacial hydrology",
                         "m s-1", "");
   m_velbase_mag2.metadata().set_double("valid_min", 0.0);
@@ -283,17 +283,28 @@ void hydrologyEvan::init() {
     m_volume_water_flux.read(opts.filename, opts.record);
     m_hydrosystem.read(opts.filename, opts.record);
 
+    m_velbase_mag2.read(opts.filename, opts.record);
+
+    first_time = true;
+
   } else if (opts.type == INIT_BOOTSTRAP) {
     m_till_cover.regrid(opts.filename, OPTIONAL, till_cover);
 
     m_volume_water_flux.regrid(opts.filename, OPTIONAL, 0.0);
     m_hydrosystem.regrid(opts.filename, OPTIONAL, 0.0);
 
+    m_velbase_mag2.regrid(opts.filename, OPTIONAL, 0.0);
+
+    first_time = true;
+
   } else {
     m_till_cover.set(till_cover);
 
     m_volume_water_flux.set(0.0);
     m_hydrosystem.set(0.0);
+    m_velbase_mag2.set(0.0);
+
+    first_time = false;
   }
 
 
@@ -1559,7 +1570,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
   m_total_input_ghosts.copy_from(m_total_input_ghosts_temp);
 
   //  we need to grab the basal velocity, which is used to determine the hydrology regime
-  update_velbase_mag(m_velbase_mag2);
+  if(first_time) {
+    first_time = false;
+  } else {
+    update_velbase_mag(m_velbase_mag2);
+  }
 
   // need to grab the overburden pressure for the calculation of the hydrology scheme
   {

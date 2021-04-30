@@ -61,6 +61,8 @@ public:
 
 protected:
 
+
+
   virtual void get_input_rate(double hydro_t, double hydro_dt, IceModelVec2S &result);
 //  virtual MaxTimestep max_timestep_impl(double t);
   //! Solves an implicit step of a highly-simplified ODE.
@@ -104,6 +106,8 @@ private:
   int low_check(int i);
   void finite_difference(double point_array[3][3], double& u, double& v);
   void gradient_five_point(double point_array[5][5], double& u, double& v);
+
+  bool first_time;
 
 protected:
 

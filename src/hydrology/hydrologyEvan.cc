@@ -977,6 +977,8 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   }
   loop.check();
 
+  assert(result >= 0.0);
+
 }
 
 

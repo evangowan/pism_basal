@@ -19,6 +19,7 @@
 #ifndef _PISMHYDROLOGYEVAN_H_
 #define _PISMHYDROLOGYEVAN_H_
 
+#include <cassert>
 #include "Hydrology.hh"
 #include "pism/util/iceModelVec.hh"
 #include "pism/util/Component.hh"

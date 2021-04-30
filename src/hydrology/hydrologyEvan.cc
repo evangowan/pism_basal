@@ -999,9 +999,12 @@ to develop a tunnel based system because there should be more water available to
 void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
-
   m_log->message(2,
              "* Starting hydrologyEvan::update_impl ...\n");
+
+
+  m_log->message(2,
+             "* icedt %f \n", icedt);
 
 
   const double tillwat_max = m_config->get_double("hydrology.tillwat_max"),

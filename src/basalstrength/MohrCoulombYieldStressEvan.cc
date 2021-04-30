@@ -129,6 +129,24 @@ void MohrCoulombYieldStressEvan::init_impl() {
 
   MohrCoulombYieldStress::init_impl();
 
+  const double high_tauc   = m_config->get_double("basal_yield_stress.ice_free_bedrock")
+
+  InputOptions opts = process_input_options(m_grid->com);
+
+  if (opts.type == INIT_RESTART) {
+    m_basal_yield_stress.read(opts.filename, opts.record);
+
+
+  } else if (opts.type == INIT_BOOTSTRAP) {
+    m_basal_yield_stress.regrid(opts.filename, OPTIONAL, high_tauc);
+
+
+  } else {
+    m_basal_yield_stress.set(high_tauc);
+
+  }
+
+
 //  m_effective_pressure.set(0.0);
 
 }

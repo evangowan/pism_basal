@@ -943,7 +943,7 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
   if (not m_hold_bmelt) {
 
     if (restart_skip){
-      m_bmelt_local.set(0.0)
+      m_bmelt_local.set(0.0);
       restart_skip = false;
     } else { 
 

@@ -284,6 +284,7 @@ void hydrologyEvan::init() {
     m_volume_water_flux.read(opts.filename, opts.record);
     m_hydrosystem.read(opts.filename, opts.record);
     m_Wtil.read(opts.filename, opts.record);
+    restart_skip = true;
 
 
   } else if (opts.type == INIT_BOOTSTRAP) {
@@ -293,6 +294,8 @@ void hydrologyEvan::init() {
     m_hydrosystem.regrid(opts.filename, OPTIONAL, 0.0);
     m_Wtil.regrid(opts.filename, OPTIONAL, 0.0);
 
+    restart_skip = true;
+
 
   } else {
     m_till_cover.set(till_cover);
@@ -301,6 +304,8 @@ void hydrologyEvan::init() {
     m_hydrosystem.set(0.0);
     m_velbase_mag2.set(0.0);
     m_Wtil.set(0.0);
+
+    restart_skip = false;
 
   }
 
@@ -936,7 +941,15 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
 
 
   if (not m_hold_bmelt) {
-    m_bmelt_local.copy_from(bmelt);
+
+    if (restart_skip){
+      m_bmelt_local.set(0.0)
+      restart_skip = false;
+    } else { 
+
+     m_bmelt_local.copy_from(bmelt);
+
+    }
   }
 
 

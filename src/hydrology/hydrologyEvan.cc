@@ -1660,6 +1660,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double psi_exponent = -1.0 / (2.0 * alpha);
 
         double cavity_spacing = 10;
+        double cavity_area = 0.01;
 
 
         double effective_pressure_temp;
@@ -1693,7 +1694,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
              // assuming a constant spacing 
 
-             m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) / ( dx / cavity_spacing);
+             m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) / ( dx / cavity_spacing) / cavity_area;
 
           }
 

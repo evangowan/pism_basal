@@ -1659,11 +1659,15 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double protrusion_height = 0.1;
         double psi_exponent = -1.0 / (2.0 * alpha);
 
+        double cavity_spacing = 10;
+
 
         double effective_pressure_temp;
 
         // equation 3 in Schoof 2010, used to determine the hydrology system type
         double Qc = m_velbase_mag2(i,j) * protrusion_height / (c1 * (alpha-1.0) * m_hydro_gradient(i,j));
+
+        // first assume that the water is all routed through a tunnel system
         m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) / ( dx / tunnel_spacing);
 
 
@@ -1678,16 +1682,25 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           // equation 2 in Schoof 2010
 
 
-          effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag2(i,j) * protrusion_height ) /
-                                         ( c2 * pow(c3, -1.0 / alpha) * pow(m_volume_water_flux(i,j), 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
-                                         , (1.0/Glen_exponent));
 
 
           if(m_volume_water_flux(i,j) > Qc) {
              m_hydrosystem(i,j) = 1.; // tunnels
           } else {
              m_hydrosystem(i,j) = 2.; // cavities
+
+             // switch to a cavity system
+
+             // assuming a constant spacing 
+
+             m_volume_water_flux(i,j) = m_total_input_ghosts(i,j) * pow(dx,2) / ( dx / cavity_spacing);
+
           }
+
+
+          effective_pressure_temp = pow(( c1 * m_volume_water_flux(i,j) * m_hydro_gradient(i,j) + m_velbase_mag2(i,j) * protrusion_height ) /
+                                         ( c2 * pow(c3, -1.0 / alpha) * pow(m_volume_water_flux(i,j), 1.0/alpha) * pow(m_hydro_gradient(i,j), psi_exponent))
+                                         , (1.0/Glen_exponent));
 
         }
 

@@ -232,15 +232,6 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
  m_width_mask_v.metadata().set_double("valid_min", 0.0);
 
 
-// processor 0 memory
-
-//m_processor_mask
-//m_offset_mask
-//m_width_mask
-//m_total_input_ghosts
-// m_gradient_permutation
-// m_hydro_gradient
-
   m_processor_mask_p0 = m_processor_mask.allocate_proc0_copy();
   m_offset_mask_u_p0 = m_offset_mask_u.allocate_proc0_copy();
   m_offset_mask_v_p0 = m_offset_mask_v.allocate_proc0_copy();
@@ -390,10 +381,6 @@ void hydrologyEvan::init() {
   }
   loop.check();
 
-//  m_log->message(2,
- //            "* Initializing Evan's null-transport subglacial hydrology model ...\n");
-
-
 
 }
 
@@ -414,9 +401,6 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir_v.define(output);
   m_tunnel_cross_section.define(output);
   m_hydrology_fraction_overburden.define(output);
-//  m_processor_mask.define(output);  // does not need to be output
-//  m_pressure_temp.define(output); // does not need to be output
-//  m_gradient_permutation.define(output); // does not need to be output
 
 }
 
@@ -435,9 +419,7 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_hydro_gradient_dir_v.write(output);
   m_tunnel_cross_section.write(output);
   m_hydrology_fraction_overburden.write(output);
-//  m_processor_mask.write(output);  // does not need to be output
-//  m_pressure_temp.write(output); // does not need to be output
-//  m_gradient_permutation.write(output); // does not need to be output
+
 }
 
 
@@ -1022,8 +1004,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
              "* Starting hydrologyEvan::update_impl ...\n");
 
 
-  m_log->message(2,
-             "* icedt %f \n", icedt);
+
 
 
   const double tillwat_max = m_config->get_double("hydrology.tillwat_max"),

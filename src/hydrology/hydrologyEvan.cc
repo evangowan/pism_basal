@@ -108,7 +108,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
 
   m_basal_potential_temp.create(m_grid, "basal_potential_temp", WITHOUT_GHOSTS);
   m_basal_potential_temp.set_attrs("internal",
-                        "hydraualic potential  at the base",
+                        "temporary hydraualic potential  at the base",
                         "Pa", "");
 
 
@@ -530,7 +530,7 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
 
     const IceModelVec2S &bed_elevation = *m_grid->variables().get_2d_scalar("bedrock_altitude");
 
-    list.add(m_basal_potential_temp);
+    list.add(m_basal_potential_temp, &bed_elevation, &surface_elevation);
 
 
     ParallelSection loop(m_grid->com);

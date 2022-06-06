@@ -106,7 +106,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "Pa", "");
 
 
-  m_basal_potential_temp.create_temp(m_grid, "basal_potential_temp", WITHOUT_GHOSTS);
+  m_basal_potential_temp.create(m_grid, "basal_potential_temp", WITHOUT_GHOSTS);
   m_basal_potential_temp.set_attrs("internal",
                         "hydraualic potential  at the base",
                         "Pa", "");

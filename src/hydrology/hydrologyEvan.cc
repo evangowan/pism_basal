@@ -530,7 +530,9 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
 
     const IceModelVec2S &bed_elevation = *m_grid->variables().get_2d_scalar("bedrock_altitude");
 
-    list.add(m_basal_potential_temp, &bed_elevation, &surface_elevation);
+    list.add(m_basal_potential_temp);
+    list.add(&bed_elevation);
+    list.add(&surface_elevation);
 
 
     ParallelSection loop(m_grid->com);

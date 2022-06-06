@@ -100,6 +100,19 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "Pa m-1", "");
 
 
+  m_basal_potential.create(m_grid, "basal_potential", WITHOUT_GHOSTS);
+  m_basal_potential.set_attrs("internal",
+                        "hydraualic potential  at the base",
+                        "Pa, "");
+
+
+  m_basal_potential_temp.create_temp(m_grid, "basal_potential_temp", WITHOUT_GHOSTS);
+  m_basal_potential_temp.set_attrs("internal",
+                        "hydraualic potential  at the base",
+                        "Pa, "");
+
+
+
   m_hydro_gradient.create(m_grid, "hydro_gradient", WITHOUT_GHOSTS);
   m_hydro_gradient.set_attrs("internal",
                         "pressure gradient at the base",
@@ -396,6 +409,7 @@ void hydrologyEvan::define_model_state_impl(const PIO &output) const {
   m_melt_rate_local.define(output);
   m_hydrosystem.define(output);
   m_velbase_mag2.define(output);
+  m_basal_potential.define(output);
   m_hydro_gradient.define(output);
   m_hydro_gradient_dir_u.define(output);
   m_hydro_gradient_dir_v.define(output);
@@ -414,6 +428,7 @@ void hydrologyEvan::write_model_state_impl(const PIO &output) const {
   m_melt_rate_local.write(output);
   m_hydrosystem.write(output);
   m_velbase_mag2.write(output);
+  m_basal_potential.write(output);
   m_hydro_gradient.write(output);
   m_hydro_gradient_dir_u.write(output);
   m_hydro_gradient_dir_v.write(output);
@@ -485,6 +500,57 @@ void hydrologyEvan::update_velbase_mag(IceModelVec2S &result) {
 void hydrologyEvan::update_surface_runoff(IceModelVec2S &result) {
 
   m_surfaceT->runoff_rate(result);
+
+}
+
+
+
+// Calculate the hydraulic potential at the base of the ice sheet, based on Equation 6.10 in Cuffey and Paterson (2010).
+void hydrologyEvan::basal_potential(IceModelVec2S &result) {
+
+  double rho_i       = m_config->get_double("constants.ice.density");
+  double rho_w       = m_config->get_double("constants.fresh_water.density");
+  double g           = m_config->get_double("constants.standard_gravity");
+  double flotation_fraction = m_config->get_double("hydrology.floatation_fraction");
+
+  double rho_i_g = rho_i * g;
+  double density_ratio = rho_w / rho_i;
+
+  const double
+    dx = m_grid->dx(),
+    dy = m_grid->dy();
+
+  double u, v;
+
+  {
+    IceModelVec::AccessList list;
+
+
+    const IceModelVec2S &surface_elevation = *m_grid->variables().get_2d_scalar("surface_altitude");
+
+    const IceModelVec2S &bed_elevation = *m_grid->variables().get_2d_scalar("bedrock_altitude");
+
+    list.add(m_basal_potential_temp);
+
+
+    ParallelSection loop(m_grid->com);
+    try {
+      for (Points p(*m_grid); p; p.next()) {
+        const int i = p.i(), j = p.j();
+
+        // Equation 6.10 in Cuffy and Paterson (2010)
+
+        m_basal_potential_temp(i,j) = rho_i_g  * surface_elevation(i,j) + (rho_w-rho_i) * (surface_elevation(i,j) - bed_elevation(i,j)) * g;
+      
+      }
+    } catch (...) {
+      loop.failed();
+    }
+    loop.check();
+  }
+
+  result.copy_from(m_basal_potential_temp);
+
 
 }
 
@@ -1100,7 +1166,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
 
 
-  // we're going to need the potential gradient
+  // we're going to need the potential and potential gradient
+
+  basal_potential(m_basal_potential);
   potential_gradient(m_hydro_gradient_dir_u,m_hydro_gradient_dir_v);
   surface_gradient(m_surface_gradient_dir);
 
@@ -1128,7 +1196,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   m_total_input_ghosts.update_ghosts();
 
-  // sort the permutation array, finding the order from lowest gradient to highest gradient
+  // sort the permutation array, finding the order from highest potential to lowest
+
+  // TODO change the variable names since it is now ordered from highest potential to lowest
   {
     int i_perm, j_perm;
 
@@ -1139,7 +1209,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
-    IceModelVec::AccessList list{&m_gradient_permutation, &m_hydro_gradient, &m_processor_mask};
+    IceModelVec::AccessList list{&m_gradient_permutation, &m_basal_potential, &m_processor_mask};
 
     // I'm not entirely sure if this block is needed, but it has been so long since I coded it that I don't want to touch it
     {
@@ -1186,7 +1256,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           // convert permutation to cell coordinates
           cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); 
 
-          if( m_hydro_gradient(i_current, j_current) < m_hydro_gradient(i_compare, j_compare)) { // swap if true
+          if( m_basal_potential(i_current, j_current) > m_basal_potential(i_compare, j_compare)) { // swap if true
 
             double temp_permutation = m_gradient_permutation(i_next, j_next);
             m_gradient_permutation(i_next, j_next) = m_gradient_permutation(i_now, j_now);

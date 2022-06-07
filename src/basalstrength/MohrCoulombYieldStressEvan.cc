@@ -206,6 +206,8 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
         double pi = 3.14159265358979;
 
 
+   double yield_stress_ice = 100000; // Pa; yield stress of ice, from Cuffey and Paterson 2010
+
         double grounding_reduction = 0.001; // makes things really slippery
 
   const IceModelVec2CellType &mask           = inputs.geometry->cell_type;
@@ -281,7 +283,9 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
        // The total yield stress take into account sediment free areas, assuming the rocky areas is hydrostatic.
        // Experience shows that there will be no sliding if there is a small amount of area that has no sediment cover.
 
-       m_basal_yield_stress(i, j) = basal_yield_stress_sediments * m_till_cover_local(i, j) + temp_thk(i,j) * g * rho_i * (1.0 - m_till_cover_local(i, j));
+       // edit June 2022: now set to be a maximum of the yield stress of ice
+
+       m_basal_yield_stress(i, j) = basal_yield_stress_sediments * m_till_cover_local(i, j) + yield_stress_ice * (1.0 - m_till_cover_local(i, j));
 
        m_sliding_mechanism(i,j) = 1;
 

@@ -1114,9 +1114,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();
 
-          if (i == 32 && j == 94) {
-            std::cout << "Debug 1: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << " " << mask.ice_free(i,j) << " " << mask.ocean(i,j) << std::endl;
-          }
+//          if (i == 32 && j == 94) {
+//            std::cout << "Debug 1: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << " " << mask.ice_free(i,j) << " " << mask.ocean(i,j) << std::endl;
+//          }
 
         if ( mask.ice_free(i,j) && ! mask.ocean(i,j)) {
           m_Wtil(i,j) = 0.0;
@@ -1449,8 +1449,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         // distribute the water in the direction of largest gradient magnitude
         bool finished = false;
 
-        int lowest_index, lowest_processor;
-        double lowest_gradient;
+        int highest_index, highest_processor;
+        double highest_potential;
 
         while (! finished) {
 
@@ -1465,16 +1465,16 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             if(processor_point_counter[processor_counter] <= max_point_count[processor_counter]) { 
 
               if(! found_first) {
-                lowest_gradient = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
-                lowest_index = processor_point_counter[processor_counter];
-                lowest_processor = processor_counter;
+                highest_potential = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
+                highest_index = processor_point_counter[processor_counter];
+                highest_processor = processor_counter;
                 found_first = true;
               } else {
 
-                if( gradient_storage[processor_counter][processor_point_counter[processor_counter]] < lowest_gradient) { // use this as the next point
-                  lowest_gradient = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
-                  lowest_index = processor_point_counter[processor_counter];
-                  lowest_processor = processor_counter;
+                if( gradient_storage[processor_counter][processor_point_counter[processor_counter]] > highest_potential) { // use this as the next point
+                  highest_potential = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
+                  highest_index = processor_point_counter[processor_counter];
+                  highest_processor = processor_counter;
                 }
 
               }
@@ -1485,10 +1485,10 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           if (found_first) {
 
-            int index = serial_permutation[lowest_processor][lowest_index];
+            int index = serial_permutation[highest_processor][highest_index];
 
-            // distribute water if the gradient is significant enough
-            if (gradient_storage[lowest_processor][lowest_index] > 1.0) {
+            // distribute water if the potential is significant enough
+            if (gradient_storage[highest_processor][highest_index] > 1.0) {
 
 
 

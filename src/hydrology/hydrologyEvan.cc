@@ -1482,6 +1482,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           }
 
+	     std::cout << "Debug pro: " <<  highest_processor << " " << highest_index  << " " << highest_potential << std::endl;
 
           if (found_first) {
 

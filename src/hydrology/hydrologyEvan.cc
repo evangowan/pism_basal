@@ -1294,8 +1294,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           cell_coordinates(m_potential_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
 
-//	     std::cout << "Debug sort: " << i << " " << j << " " <<  m_potential_permutation(i,j) << " " << m_basal_potential(i_current,j_current)  << std::endl;
-
         
         }
       } catch (...) {
@@ -1490,14 +1488,12 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           }
 
-	     std::cout << "Debug pro: " <<  highest_processor << " " << highest_index  << " " << highest_potential << std::endl;
-
           if (found_first) {
 
             int index = serial_permutation[highest_processor][highest_index];
 
             // distribute water if the gradient is significant enough
-            if (hydro_gradient_vec[index] > 1.0) {
+            if (hydro_gradient_vec[index] > 0.01) {
 
 
 

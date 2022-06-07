@@ -1292,6 +1292,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           const int i = p.i(), j = p.j();
 
           cell_coordinates(m_potential_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+
+	     std::cout << "Debug sort: " i << " " j << " " <<  m_potential_permutation(i,j) << " " << m_basal_potential(i_current, j_current)  << std::endl;
+
         
         }
       } catch (...) {

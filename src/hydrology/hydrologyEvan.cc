@@ -159,9 +159,9 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                        "1", "");
   m_till_cover.set_time_independent(true);
 
-  m_gradient_permutation.create(m_grid, "gradient_permutation", WITHOUT_GHOSTS);
-  m_gradient_permutation.set_attrs("internal",
-                       "permutation array for sorting the gradient",
+  m_potential_permutation.create(m_grid, "potential_permutation", WITHOUT_GHOSTS);
+  m_potential_permutation.set_attrs("internal",
+                       "permutation array for sorting the potential",
                        "1", "");
 
 
@@ -252,7 +252,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_width_mask_v_p0 = m_width_mask_v.allocate_proc0_copy();
   m_total_input_ghosts_p0 = m_total_input_ghosts.allocate_proc0_copy();
   m_total_input_ghosts_temp_p0 = m_total_input_ghosts_temp.allocate_proc0_copy();
-  m_gradient_permutation_p0 = m_gradient_permutation.allocate_proc0_copy();
+  m_potential_permutation_p0 = m_potential_permutation.allocate_proc0_copy();
   m_hydro_gradient_p0 = m_hydro_gradient.allocate_proc0_copy();
   m_hydro_gradient_dir_u_p0 = m_hydro_gradient_dir_u.allocate_proc0_copy();
   m_hydro_gradient_dir_v_p0 = m_hydro_gradient_dir_v.allocate_proc0_copy();
@@ -356,7 +356,7 @@ void hydrologyEvan::init() {
 
   int counter = 0;
 
-  list.add(m_gradient_permutation);
+  list.add(m_potential_permutation);
   list.add(m_processor_mask);
   list.add(m_offset_mask_u);
   list.add(m_offset_mask_v);
@@ -380,7 +380,7 @@ void hydrologyEvan::init() {
       const int i = p.i(), j = p.j();
 
 
-      m_gradient_permutation(i, j) = (double)counter;
+      m_potential_permutation(i, j) = (double)counter;
       m_processor_mask(i,j) = m_grid -> rank();
       m_offset_mask_u(i,j) = i_offset;
       m_offset_mask_v(i,j) = j_offset;
@@ -1134,9 +1134,9 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           double Wtill_after;
           double before_wat=m_total_input_ghosts(i,j);
 
-          if (i == 32 && j == 94) {
-            std::cout << "Debug 2: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << std::endl;
-          }
+//          if (i == 32 && j == 94) {
+//            std::cout << "Debug 2: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << std::endl;
+//          }
 
           if (m_till_cover(i,j) < 0.01) { // no till
             Wtill_after = Wtill_before;
@@ -1211,7 +1211,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
     int i_current, j_current, i_next, j_next, i_compare, j_compare, i_now, j_now;
 
-    IceModelVec::AccessList list{&m_gradient_permutation, &m_basal_potential, &m_processor_mask};
+    IceModelVec::AccessList list{&m_potential_permutation, &m_basal_potential, &m_processor_mask};
 
     // I'm not entirely sure if this block is needed, but it has been so long since I coded it that I don't want to touch it
     {
@@ -1220,7 +1220,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         for (Points p(*m_grid); p; p.next()) {
           const int i = p.i(), j = p.j();
 
-          cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+          cell_coordinates(m_potential_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
 
         }
       } catch (...) {
@@ -1238,7 +1238,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         i_now = i;
         j_now = j;
-        cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+        cell_coordinates(m_potential_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
 
         int backwards_count = counter - 1;
 
@@ -1256,13 +1256,13 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           cell_coordinates(double(backwards_count), sub_width_i, sub_width_j, i_offset, j_offset, i_next, j_next); 
 
           // convert permutation to cell coordinates
-          cell_coordinates(m_gradient_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); 
+          cell_coordinates(m_potential_permutation(i_next,j_next), sub_width_i, sub_width_j, i_offset, j_offset, i_compare, j_compare); 
 
           if( m_basal_potential(i_current, j_current) > m_basal_potential(i_compare, j_compare)) { // swap if true
 
-            double temp_permutation = m_gradient_permutation(i_next, j_next);
-            m_gradient_permutation(i_next, j_next) = m_gradient_permutation(i_now, j_now);
-            m_gradient_permutation(i_now, j_now) = temp_permutation;
+            double temp_permutation = m_potential_permutation(i_next, j_next);
+            m_potential_permutation(i_next, j_next) = m_potential_permutation(i_now, j_now);
+            m_potential_permutation(i_now, j_now) = temp_permutation;
             i_now = i_next;
             j_now = j_next;
             backwards_count--;
@@ -1291,7 +1291,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         for (Points p(*m_grid); p; p.next()) {
           const int i = p.i(), j = p.j();
 
-          cell_coordinates(m_gradient_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
+          cell_coordinates(m_potential_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
         
         }
       } catch (...) {
@@ -1323,7 +1323,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_hydro_gradient.put_on_proc0(*m_hydro_gradient_p0);
     m_hydro_gradient_dir_u.put_on_proc0(*m_hydro_gradient_dir_u_p0);
     m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
-    m_gradient_permutation.put_on_proc0(*m_gradient_permutation_p0);
+    m_potential_permutation.put_on_proc0(*m_potential_permutation_p0);
 
 
     // This is the section of the code that is running on a single processor
@@ -1338,7 +1338,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         petsc::VecArray width_mask_u_p0(*m_width_mask_u_p0);
         petsc::VecArray width_mask_v_p0(*m_width_mask_v_p0);
         petsc::VecArray total_input_ghosts_temp_p0(*m_total_input_ghosts_temp_p0);
-        petsc::VecArray gradient_permutation_p0(*m_gradient_permutation_p0);
+        petsc::VecArray potential_permutation_p0(*m_potential_permutation_p0);
         petsc::VecArray hydro_gradient_p0(*m_hydro_gradient_p0);
         petsc::VecArray hydro_gradient_p0_vec_u(*m_hydro_gradient_dir_u_p0);
         petsc::VecArray hydro_gradient_p0_vec_v(*m_hydro_gradient_dir_v_p0);
@@ -1349,7 +1349,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double* width_mask_u_vec =  width_mask_u_p0.get();
         double* width_mask_v_vec =  width_mask_v_p0.get();
         double* total_input_ghosts_temp_vec =  total_input_ghosts_temp_p0.get();
-        double* gradient_permutation_vec =  gradient_permutation_p0.get();
+        double* potential_permutation_vec =  potential_permutation_p0.get();
         double* hydro_gradient_vec =  hydro_gradient_p0.get();
         double* hydro_gradient_vec_u = hydro_gradient_p0_vec_u.get();
         double* hydro_gradient_vec_v = hydro_gradient_p0_vec_v.get();
@@ -1401,7 +1401,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         // read in the permutation arrays and separate per processor
         double serial_permutation[number_of_processors][max_points];
-        double gradient_storage[number_of_processors][max_points]; // used to reduce the amount of calculations
+        double potential_storage[number_of_processors][max_points]; // used to reduce the amount of calculations
         int i_array[number_of_processors][max_points];
         int j_array[number_of_processors][max_points];
 
@@ -1414,7 +1414,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         int i_temp, j_temp, permutation_index;
 
-        // this loop places the sorted gradient values from each processor into a storage array for sorting
+        // this loop places the sorted potential values from each processor into a storage array for sorting
         for (int j = 0; j < num_j; j++) {
           for (int i = 0; i < num_i; i++) {
 
@@ -1424,11 +1424,11 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             processor_point_counter[processor]++; // increment the number of points in that particular processor
 
 
-            cell_coordinates(gradient_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
+            cell_coordinates(potential_permutation_vec[vector_index], processor_width_mask_u[processor], processor_width_mask_v[processor], processor_offset_mask_u[processor], processor_offset_mask_v[processor], i_temp, j_temp);
 
             permutation_index = j_temp * num_i + i_temp;
 
-            gradient_storage[processor][processor_point_counter[processor]] = hydro_gradient_vec[permutation_index]; // should be highest to lowest
+            potential_storage[processor][processor_point_counter[processor]] = potential_permutation_vec[permutation_index]; // should be highest to lowest
 
             serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
 
@@ -1446,7 +1446,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         }
 
 
-        // distribute the water in the direction of largest gradient magnitude
+        // distribute the water in the direction of gradient magnitude
         bool finished = false;
 
         int highest_index, highest_processor;
@@ -1458,21 +1458,21 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           bool found_first = false;
 
-          // This loop finds the smallest gradient value
+          // This loop finds the largest potential value
           for (int processor_counter = 0; processor_counter < number_of_processors; processor_counter++) {
 
             // check if the processor still has points to check
             if(processor_point_counter[processor_counter] <= max_point_count[processor_counter]) { 
 
               if(! found_first) {
-                highest_potential = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
+                highest_potential = potential_storage[processor_counter][processor_point_counter[processor_counter]];
                 highest_index = processor_point_counter[processor_counter];
                 highest_processor = processor_counter;
                 found_first = true;
               } else {
 
-                if( gradient_storage[processor_counter][processor_point_counter[processor_counter]] > highest_potential) { // use this as the next point
-                  highest_potential = gradient_storage[processor_counter][processor_point_counter[processor_counter]];
+                if( potential_storage[processor_counter][processor_point_counter[processor_counter]] > highest_potential) { // use this as the next point
+                  highest_potential = potential_storage[processor_counter][processor_point_counter[processor_counter]];
                   highest_index = processor_point_counter[processor_counter];
                   highest_processor = processor_counter;
                 }
@@ -1487,8 +1487,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             int index = serial_permutation[highest_processor][highest_index];
 
-            // distribute water if the potential is significant enough
-            if (gradient_storage[highest_processor][highest_index] > 1.0) {
+            // distribute water if the gradient is significant enough
+            if (hydro_gradient_vec[index] > 1.0) {
 
 
 

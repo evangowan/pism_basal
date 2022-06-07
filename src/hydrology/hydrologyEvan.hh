@@ -97,7 +97,7 @@ protected:
 
 private:
 
-  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_total_input_ghosts_temp, m_tunnel_cross_section,  m_surface_gradient, m_surface_elevation_temp,  m_bed_elevation_temp, m_hydrology_fraction_overburden, m_gradient_permutation, m_processor_mask, m_offset_mask_u, m_width_mask_u, m_offset_mask_v, m_width_mask_v, m_hydro_gradient_dir_u, m_hydro_gradient_dir_v, m_gradient_temp_u, m_gradient_temp_v, m_basal_potential, m_basal_potential_temp;
+  IceModelVec2S m_melt_rate_local, m_hydro_gradient, m_pressure_temp, m_total_input_ghosts, m_total_input_ghosts_temp, m_tunnel_cross_section,  m_surface_gradient, m_surface_elevation_temp,  m_bed_elevation_temp, m_hydrology_fraction_overburden, m_potential_permutation, m_processor_mask, m_offset_mask_u, m_width_mask_u, m_offset_mask_v, m_width_mask_v, m_hydro_gradient_dir_u, m_hydro_gradient_dir_v, m_gradient_temp_u, m_gradient_temp_v, m_basal_potential, m_basal_potential_temp;
 
   IceModelVec2V  m_surface_gradient_dir, m_surface_gradient_temp, m_bed_gradient_temp;// directional gradient
 
@@ -113,7 +113,7 @@ private:
 
 protected:
 
-  petsc::Vec::Ptr m_offset_mask_u_p0, m_width_mask_u_p0, m_offset_mask_v_p0, m_width_mask_v_p0, m_processor_mask_p0, m_gradient_permutation_p0, m_total_input_ghosts_p0, m_total_input_ghosts_temp_p0, m_hydro_gradient_p0, m_hydro_gradient_dir_u_p0, m_hydro_gradient_dir_v_p0;
+  petsc::Vec::Ptr m_offset_mask_u_p0, m_width_mask_u_p0, m_offset_mask_v_p0, m_width_mask_v_p0, m_processor_mask_p0, m_potential_permutation_p0, m_total_input_ghosts_p0, m_total_input_ghosts_temp_p0, m_hydro_gradient_p0, m_hydro_gradient_dir_u_p0, m_hydro_gradient_dir_v_p0;
 
 };
 

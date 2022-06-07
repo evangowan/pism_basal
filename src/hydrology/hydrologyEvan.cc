@@ -1293,7 +1293,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
           cell_coordinates(m_potential_permutation(i,j), sub_width_i, sub_width_j, i_offset, j_offset, i_current, j_current);
 
-	     std::cout << "Debug sort: " << i << " " << j << " " <<  m_potential_permutation(i,j) << " " << m_basal_potential(i_current,j_current)  << std::endl;
+//	     std::cout << "Debug sort: " << i << " " << j << " " <<  m_potential_permutation(i,j) << " " << m_basal_potential(i_current,j_current)  << std::endl;
 
         
         }
@@ -1327,6 +1327,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
     m_hydro_gradient_dir_u.put_on_proc0(*m_hydro_gradient_dir_u_p0);
     m_hydro_gradient_dir_v.put_on_proc0(*m_hydro_gradient_dir_v_p0);
     m_potential_permutation.put_on_proc0(*m_potential_permutation_p0);
+    m_basal_potential.put_on_proc0(*m_basal_potential_p0);
 
 
     // This is the section of the code that is running on a single processor
@@ -1343,6 +1344,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         petsc::VecArray total_input_ghosts_temp_p0(*m_total_input_ghosts_temp_p0);
         petsc::VecArray potential_permutation_p0(*m_potential_permutation_p0);
         petsc::VecArray hydro_gradient_p0(*m_hydro_gradient_p0);
+        petsc::VecArray basal_potential_p0(*m_basal_potential_p0);
         petsc::VecArray hydro_gradient_p0_vec_u(*m_hydro_gradient_dir_u_p0);
         petsc::VecArray hydro_gradient_p0_vec_v(*m_hydro_gradient_dir_v_p0);
 
@@ -1353,6 +1355,8 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
         double* width_mask_v_vec =  width_mask_v_p0.get();
         double* total_input_ghosts_temp_vec =  total_input_ghosts_temp_p0.get();
         double* potential_permutation_vec =  potential_permutation_p0.get();
+        double* basal_potential_vec =  basal_potential_p0.get();
+
         double* hydro_gradient_vec =  hydro_gradient_p0.get();
         double* hydro_gradient_vec_u = hydro_gradient_p0_vec_u.get();
         double* hydro_gradient_vec_v = hydro_gradient_p0_vec_v.get();
@@ -1431,7 +1435,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             permutation_index = j_temp * num_i + i_temp;
 
-            potential_storage[processor][processor_point_counter[processor]] = potential_permutation_vec[permutation_index]; // should be highest to lowest
+            potential_storage[processor][processor_point_counter[processor]] = basal_potential_vec[permutation_index]; // should be highest to lowest
 
             serial_permutation[processor][processor_point_counter[processor]] = permutation_index;
 

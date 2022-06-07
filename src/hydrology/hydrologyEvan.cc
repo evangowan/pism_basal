@@ -253,6 +253,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
   m_total_input_ghosts_p0 = m_total_input_ghosts.allocate_proc0_copy();
   m_total_input_ghosts_temp_p0 = m_total_input_ghosts_temp.allocate_proc0_copy();
   m_potential_permutation_p0 = m_potential_permutation.allocate_proc0_copy();
+  m_basal_potential_p0 = m_basal_potential.allocate_proc0_copy();
   m_hydro_gradient_p0 = m_hydro_gradient.allocate_proc0_copy();
   m_hydro_gradient_dir_u_p0 = m_hydro_gradient_dir_u.allocate_proc0_copy();
   m_hydro_gradient_dir_v_p0 = m_hydro_gradient_dir_v.allocate_proc0_copy();

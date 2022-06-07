@@ -1454,7 +1454,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
         while (! finished) {
 
-          // find the lowest index of the lowest gradient
+          // find the highest index of the highest potential
 
           bool found_first = false;
 
@@ -1630,7 +1630,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
             }
 
-            processor_point_counter[lowest_processor]++;
+            processor_point_counter[highest_processor]++;
 
           } else {
 

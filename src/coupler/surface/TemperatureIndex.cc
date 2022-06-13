@@ -417,6 +417,7 @@ void TemperatureIndex::update_impl(double t, double dt) {
   m_atmosphere->begin_pointwise_access();
 
   const double ice_density = m_config->get_double("constants.ice.density");
+  const double water_density = m_config->get_double("constants.fresh_water.density");
 
   ParallelSection loop(m_grid->com);
   try {
@@ -519,8 +520,6 @@ void TemperatureIndex::update_impl(double t, double dt) {
             m_melt(i, j)         += changes.melt * ice_density;
             m_runoff(i, j)       += changes.runoff * ice_density;
 
- // m_log->message(2,
-   //          "%i %i %i %f ...\n",k, i, j, m_runoff(i, j));
 
           }
 
@@ -529,7 +528,8 @@ void TemperatureIndex::update_impl(double t, double dt) {
           m_climatic_mass_balance(i, j) += changes.smb * ice_density / m_dt;
         } // end of the time-stepping loop
 
-        m_runoff_rate_store(i, j) = m_runoff(i, j) / (m_dt * double(N)); // added by Evan
+        // switch to m/s (water thickness) for runoff storage
+        m_runoff_rate_store(i, j) = m_runoff(i, j) / (m_dt * double(N)) / water_density; // added by Evan
 
       }
 

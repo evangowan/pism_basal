@@ -1038,10 +1038,6 @@ void hydrologyEvan::get_input_rate(double hydro_t, double hydro_dt,
       assert(result(i,j) >= 0.0);
 
 
-          if (i == 32 && j == 94) {
-            std::cout << "Debug input: " << m_melt_rate_local(i,j)  << " " << m_bmelt_local(i,j)  << " " << result(i,j) << std::endl;
-          }
-
     }
 
   } catch (...) {
@@ -1115,9 +1111,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();
 
-//          if (i == 32 && j == 94) {
-//            std::cout << "Debug 1: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << " " << mask.ice_free(i,j) << " " << mask.ocean(i,j) << std::endl;
-//          }
 
         if ( mask.ice_free(i,j) && ! mask.ocean(i,j)) {
           m_Wtil(i,j) = 0.0;
@@ -1135,9 +1128,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
           double Wtill_after;
           double before_wat=m_total_input_ghosts(i,j);
 
-//          if (i == 32 && j == 94) {
-//            std::cout << "Debug 2: " <<  m_Wtil(i,j) << " " << m_total_input_ghosts(i,j)  << " " << m_till_cover(i,j) << " " << icedt * ( m_total_input_ghosts(i,j) - tillwat_decay_rate) / m_till_cover(i,j) << std::endl;
-//          }
 
           if (m_till_cover(i,j) < 0.01) { // no till
             Wtill_after = Wtill_before;
@@ -1201,7 +1191,6 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
 
   // sort the permutation array, finding the order from highest potential to lowest
 
-  // TODO change the variable names since it is now ordered from highest potential to lowest
   {
     int i_perm, j_perm;
 

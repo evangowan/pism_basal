@@ -198,7 +198,7 @@ netcdf pism_config {
     pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_type = "scalar";
     pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_units = "degrees";
 
-    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress = 1e5;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress = 1.0e5;
     pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_doc = "Maximum yield stress for areas not covered by sediment, set by default to be the yield stress of ice";
     pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_option = "ice_rock_stress";
     pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_type = "scalar";

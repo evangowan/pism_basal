@@ -201,7 +201,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                q = m_config->get_double("basal_resistance.pseudo_plastic.q"),
                rocky_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.rocky_phi"),
                seddy_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.seddy_phi"),
-               ice_rock_stress = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress ");
+               ice_rock_stress = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
         double pi = 3.14159265358979;

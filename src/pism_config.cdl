@@ -198,6 +198,12 @@ netcdf pism_config {
     pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_type = "scalar";
     pism_config:basal_yield_stress.mohr_coulomb_evan.seddy_phi_units = "degrees";
 
+    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress = 1e5;
+    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_doc = "Maximum yield stress for areas not covered by sediment, set by default to be the yield stress of ice";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_option = "ice_rock_stress";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_type = "scalar";
+    pism_config:basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress_units = "Pa";
+
 
     pism_config:basal_yield_stress.slippery_grounding_lines = "no";
     pism_config:basal_yield_stress.slippery_grounding_lines_doc = "If yes, at icy grounded locations with bed elevations below sea level, within one cell of floating ice or ice-free ocean, make tauc as low as possible from the Mohr-Coulomb relation.  Specifically, at such locations replace the normally-computed tauc from the Mohr-Coulomb relation, which uses the effective pressure from the modeled amount of water in the till, by the minimum value of tauc from Mohr-Coulomb, i.e. by using the effective pressure corresponding to the maximum amount of till-stored water.  Does not alter the modeled or reported amount of till water, nor does this mechanism affect water conservation.";

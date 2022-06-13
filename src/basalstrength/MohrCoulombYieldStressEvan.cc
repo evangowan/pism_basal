@@ -200,13 +200,12 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
                g = m_config->get_double("constants.standard_gravity"),
                q = m_config->get_double("basal_resistance.pseudo_plastic.q"),
                rocky_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.rocky_phi"),
-               seddy_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.seddy_phi");
+               seddy_phi = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.seddy_phi"),
+               ice_rock_stress = m_config->get_double("basal_yield_stress.mohr_coulomb_evan.ice_rock_yield_stress ");
         double m_pseudo_u_threshold = m_config->get_double("basal_resistance.pseudo_plastic.u_threshold", "m second-1");
 
         double pi = 3.14159265358979;
 
-
-   double yield_stress_ice = 100000; // Pa; yield stress of ice, from Cuffey and Paterson 2010
 
         double grounding_reduction = 0.001; // makes things really slippery
 
@@ -285,7 +284,7 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
 
        // edit June 2022: now set to be a maximum of the yield stress of ice
 
-       m_basal_yield_stress(i, j) = basal_yield_stress_sediments * m_till_cover_local(i, j) + yield_stress_ice * (1.0 - m_till_cover_local(i, j));
+       m_basal_yield_stress(i, j) = basal_yield_stress_sediments * m_till_cover_local(i, j) + ice_rock_stress * (1.0 - m_till_cover_local(i, j));
 
        m_sliding_mechanism(i,j) = 1;
 

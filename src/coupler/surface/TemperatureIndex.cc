@@ -529,7 +529,7 @@ void TemperatureIndex::update_impl(double t, double dt) {
         } // end of the time-stepping loop
 
         // switch to m/s (water thickness) for runoff storage
-        m_runoff_rate_store(i, j) = m_runoff(i, j) / (m_dt * double(N)) / water_density; // added by Evan
+        m_runoff_rate_store(i, j) = m_runoff(i, j) / m_dt / water_density; // added by Evan
 
       }
 

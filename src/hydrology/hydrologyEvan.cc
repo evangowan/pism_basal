@@ -543,7 +543,7 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
 
         // Equation 6.10 in Cuffy and Paterson (2010)
 
-        m_basal_potential_temp(i,j) = rho_i_g  * surface_elevation(i,j) + (rho_w-rho_i) * (surface_elevation(i,j) - bed_elevation(i,j)) * g;
+        m_basal_potential_temp(i,j) = rho_i_g  * (flotation_fraction * surface_elevation(i,j) + (density_ratio - flotation_fraction) * bed_elevation(i,j));
       
       }
     } catch (...) {

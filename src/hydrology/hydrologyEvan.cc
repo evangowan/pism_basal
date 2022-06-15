@@ -590,7 +590,6 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
 
     double sum_all = 273.0;
 
-    ParallelSection loop(m_grid->com);
     try {
 
 

@@ -1482,7 +1482,7 @@ void hydrologyEvan::update_impl(double icet, double icedt) {
             int index = serial_permutation[highest_processor][highest_index];
 
             // distribute water if the gradient is significant enough
-            if (hydro_gradient_vec[index] > 0.01) {
+            if (hydro_gradient_vec[index] > 1.0) {
 
 
 

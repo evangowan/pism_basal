@@ -550,7 +550,7 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
   }
 
 
-  m_basal_potential_temp.update_ghosts()
+  m_basal_potential_temp.update_ghosts();
 
 
     // Set grid_width to 5 to match the gradient calculation

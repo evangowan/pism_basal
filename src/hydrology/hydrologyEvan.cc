@@ -544,6 +544,9 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
     m_bed_elevation_temp.copy_from(bed_elevation);
     m_bed_elevation_temp.update_ghosts();
 
+    int i_check, j_check;
+
+
     double surface_elevation_average, bed_elevation_average;
 
     ParallelSection loop(m_grid->com);
@@ -629,7 +632,6 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
 
 
       double potential_sum;
-      int i_check, j_check;
 
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();

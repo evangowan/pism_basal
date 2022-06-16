@@ -523,24 +523,61 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
 
   double u, v;
 
+
+  // Set grid_width to 5 to match the gradient calculation
+  int grid_width = 5; 
+  double grid_squared;
+  grid_squared = double(grid_width) * double(grid_width);
+
   {
 
     const IceModelVec2S &surface_elevation = *m_grid->variables().get_2d_scalar("surface_altitude");
 
     const IceModelVec2S &bed_elevation = *m_grid->variables().get_2d_scalar("bedrock_altitude");
 
-    IceModelVec::AccessList list{&m_basal_potential_temp, &bed_elevation, &surface_elevation};
+    IceModelVec::AccessList list{&m_basal_potential_temp, &bed_elevation, &surface_elevation, m_surface_elevation_temp,m_bed_elevation_temp};
 
+  
+    m_surface_elevation_temp.copy_from(surface_elevation);
+    m_surface_elevation_temp.update_ghosts();
 
+    m_bed_elevation_temp.copy_from(bed_elevation);
+    m_bed_elevation_temp.update_ghosts();
+
+    double surface_elevation_average, bed_elevation_average;
 
     ParallelSection loop(m_grid->com);
     try {
       for (Points p(*m_grid); p; p.next()) {
         const int i = p.i(), j = p.j();
 
+        surface_elevation_average = 0;
+        bed_elevation_average = 0;
+
+        for (int k=0; k < grid_width; k++) {
+          for (int l=0; l < grid_width; l++) {
+
+           i_check = i + k - ((grid_width-1)/2);
+           i_check = low_check(i_check);
+           i_check = high_i_check(i_check);     
+
+           j_check = j + l - ((grid_width-1)/2);
+           j_check = low_check(j_check);
+           j_check = high_j_check(j_check);
+
+           surface_elevation_average += surface_elevation(i_check,j_check);
+           bed_elevation_average += bed_elevation(i_check,j_check);
+
+//           potential_sum += m_basal_potential_temp(i_check,j_check) * point_store5[k][l];
+          }
+        }
+
+        surface_elevation_average = surface_elevation_average/grid_squared;
+        bed_elevation_average = bed_elevation_average/grid_squared;
+
         // Equation 6.10 in Cuffy and Paterson (2010)
 
-        m_basal_potential_temp(i,j) = rho_i_g  * (flotation_fraction * surface_elevation(i,j) + (density_ratio - flotation_fraction) * bed_elevation(i,j));
+        m_basal_potential_temp(i,j) = rho_i_g  * (flotation_fraction * surface_elevation_average + (density_ratio - flotation_fraction) * bed_elevation_average);
       
       }
     } catch (...) {
@@ -551,8 +588,6 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
     m_basal_potential_temp.update_ghosts();
 
 
-    // Set grid_width to 5 to match the gradient calculation
-    int grid_width = 5; 
 
     // Gausian smoothing array, taken from https://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm
     double point_store5[5][5];
@@ -612,10 +647,10 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
            j_check = low_check(j_check);
            j_check = high_j_check(j_check);
 
-           potential_sum += m_basal_potential_temp(i_check,j_check) * point_store5[k][l];
+//           potential_sum += m_basal_potential_temp(i_check,j_check) * point_store5[k][l];
           }
         }
-        m_basal_potential_temp(i,j) = potential_sum / sum_all;
+//        m_basal_potential_temp(i,j) = potential_sum / sum_all;
       }
     } catch (...) {
       loop.failed();

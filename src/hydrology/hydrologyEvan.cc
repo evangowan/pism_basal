@@ -106,7 +106,7 @@ hydrologyEvan :: hydrologyEvan(IceGrid::ConstPtr g, stressbalance::StressBalance
                         "Pa", "");
 
 
-  m_basal_potential_temp.create(m_grid, "basal_potential_temp", WITH_GHOSTS, 2);
+  m_basal_potential_temp.create(m_grid, "basal_potential_temp", WITHOUT_GHOSTS);
   m_basal_potential_temp.set_attrs("internal",
                         "temporary hydraualic potential  at the base",
                         "Pa", "");
@@ -571,12 +571,11 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
            surface_elevation_average += surface_elevation(i_check,j_check);
            bed_elevation_average += bed_elevation(i_check,j_check);
 
-//           potential_sum += m_basal_potential_temp(i_check,j_check) * point_store5[k][l];
           }
         }
 
-        surface_elevation_average = surface_elevation_average/grid_squared;
-        bed_elevation_average = bed_elevation_average/grid_squared;
+        surface_elevation_average = surface_elevation_average / grid_squared;
+        bed_elevation_average = bed_elevation_average / grid_squared;
 
         // Equation 6.10 in Cuffy and Paterson (2010)
 
@@ -588,76 +587,6 @@ void hydrologyEvan::basal_potential(IceModelVec2S &result) {
     }
     loop.check();
 
-    m_basal_potential_temp.update_ghosts();
-
-
-
-    // Gausian smoothing array, taken from https://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm
-    double point_store5[5][5];
-
-    point_store5[0][0] = 1.0;
-    point_store5[1][0] = 4.0;
-    point_store5[2][0] = 7.0;
-    point_store5[3][0] = 4.0;
-    point_store5[4][0] = 1.0;
-
-    point_store5[0][1] = 4.0;
-    point_store5[1][1] = 16.0;
-    point_store5[2][1] = 26.0;
-    point_store5[3][1] = 16.0;
-    point_store5[4][1] = 4.0;
-
-
-    point_store5[0][2] = 7.0;
-    point_store5[1][2] = 26.0;
-    point_store5[2][2] = 41.0;
-    point_store5[3][2] = 26.0;
-    point_store5[4][2] = 7.0;
-
-    point_store5[0][3] = 4.0;
-    point_store5[1][3] = 16.0;
-    point_store5[2][3] = 26.0;
-    point_store5[3][3] = 16.0;
-    point_store5[4][3] = 4.0;
-
-    point_store5[0][4] = 1.0;
-    point_store5[1][4] = 4.0;
-    point_store5[2][4] = 7.0;
-    point_store5[3][4] = 4.0;
-    point_store5[4][4] = 1.0;
-
-    double sum_all = 273.0;
-
-    try {
-
-
-      double potential_sum;
-
-      for (Points p(*m_grid); p; p.next()) {
-        const int i = p.i(), j = p.j();
-
-        potential_sum = 0.0;
-
-        for (int k=0; k < grid_width; k++) {
-          for (int l=0; l < grid_width; l++) {
-
-           i_check = i + k - ((grid_width-1)/2);
-           i_check = low_check(i_check);
-           i_check = high_i_check(i_check);     
-
-           j_check = j + l - ((grid_width-1)/2);
-           j_check = low_check(j_check);
-           j_check = high_j_check(j_check);
-
-//           potential_sum += m_basal_potential_temp(i_check,j_check) * point_store5[k][l];
-          }
-        }
-//        m_basal_potential_temp(i,j) = potential_sum / sum_all;
-      }
-    } catch (...) {
-      loop.failed();
-    }
-    loop.check();
 
     result.copy_from(m_basal_potential_temp);
   }

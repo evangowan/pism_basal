@@ -77,7 +77,7 @@ MohrCoulombYieldStressEvan::MohrCoulombYieldStressEvan(IceGrid::ConstPtr g,
 
   m_sliding_mechanism.create(m_grid, "sliding_mechanism", WITHOUT_GHOSTS);
   m_sliding_mechanism.set_attrs("internal",
-                       "0 for no sliding (i.e. ice free), 1 for sediment deformation, 2 for hydrology, 3 for slippery grounding line",
+                       "0 for no sliding (i.e. ice free), 1 for sediment/ice deformation, 2 for hydrology, 3 for slippery grounding line",
                        "1", "");
 
   m_till_cover_local.create(m_grid, "tillcover_local",
@@ -277,6 +277,12 @@ void MohrCoulombYieldStressEvan::update_impl(const YieldStressInputs &inputs) {
        // this is the default PISM sliding law, with sediment deforamtion
        double basal_yield_stress_sediments = c0 + Ntil * tan((M_PI/180.0) * m_till_phi(i, j));
 
+
+	 // if the sediment deformation yield stress is higher than the yield stress of the ice, then set it to that
+
+       if (basal_yield_stress_sediments > ice_rock_stress) {
+         basal_yield_stress_sediments = ice_rock_stress;
+       }
 
 
        // The total yield stress take into account sediment free areas, assuming the rocky areas is hydrostatic.
